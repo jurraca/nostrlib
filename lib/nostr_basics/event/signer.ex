@@ -4,7 +4,7 @@ defmodule NostrBasics.Event.Signer do
   """
 
   alias NostrBasics.Event
-  alias K256.Schnorr
+  alias Bitcoinex.Secp256k1.Schnorr
 
   @doc """
   Applies the schnorr signatures to an event and adds signature to it if successful
@@ -37,7 +37,7 @@ defmodule NostrBasics.Event.Signer do
   def sign_event(%Event{id: _id} = event, privkey) do
     json_for_id = Event.json_for_id(event)
 
-    case Schnorr.create_signature(json_for_id, privkey) do
+    case Schnorr.sign(privkey, json_for_id, 12) do
       {:ok, sig} -> {:ok, %{event | sig: sig}}
       {:error, message} when is_atom(message) -> {:error, Atom.to_string(message)}
     end

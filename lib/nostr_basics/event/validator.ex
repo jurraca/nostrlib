@@ -3,7 +3,7 @@ defmodule NostrBasics.Event.Validator do
   Makes sure a signature is valid
   """
 
-  alias K256.Schnorr
+  alias Bitcoinex.Secp256k1.Schnorr
   alias NostrBasics.Event
 
   @doc """
@@ -71,6 +71,6 @@ defmodule NostrBasics.Event.Validator do
   def validate_signature(%Event{id: hex_id, sig: sig, pubkey: pubkey}) do
     id = Binary.from_hex(hex_id)
 
-    Schnorr.verify_message_digest(id, sig, pubkey)
+    Schnorr.verify_signature(pubkey, id, sig)
   end
 end

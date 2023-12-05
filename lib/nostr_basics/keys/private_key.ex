@@ -15,7 +15,9 @@ defmodule NostrBasics.Keys.PrivateKey do
   """
   @spec create() :: <<_::256>>
   def create do
-    K256.Schnorr.generate_random_signing_key()
+    :binary.decode_unsigned()
+    |> :crypto.strong_rand_bytes(64)
+    |> Bitcoinex.Secp256k1.PrivateKey.new()
   end
 
   @doc """

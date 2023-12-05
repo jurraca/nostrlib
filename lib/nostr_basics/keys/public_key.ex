@@ -6,7 +6,7 @@ defmodule NostrBasics.Keys.PublicKey do
   @type id :: String.t() | <<_::256>>
 
   alias NostrBasics.Keys.PrivateKey
-  alias K256.Schnorr
+  alias Bitcoinex.Secp256k1
 
   @doc """
   Issues the public key corresponding to a given private key
@@ -21,7 +21,7 @@ defmodule NostrBasics.Keys.PublicKey do
   def from_private_key(private_key) do
     case PrivateKey.to_binary(private_key) do
       {:ok, binary_private_key} ->
-        Schnorr.verifying_key_from_signing_key(binary_private_key)
+        Secp256k1.get_y(binary_private_key)
 
       {:error, message} ->
         {:error, message}
