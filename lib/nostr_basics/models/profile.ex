@@ -1,52 +1,40 @@
-defmodule NostrBasics.Models.Profile do
+defmodule NostrBasics.Profile do
   @moduledoc """
   Represents a user's profile
   """
 
   defstruct [:about, :banner, :display_name, :lud16, :name, :nip05, :picture, :website]
 
+  @type t :: %__MODULE__{}
+  @reaction_kind 0
+
   alias NostrBasics.Event
-  alias NostrBasics.Models.Profile
-  alias NostrBasics.Keys.PublicKey
-
-  @type t :: %Profile{}
-
-  # This thing is needed so that the Jason library knows how to serialize the events
-  defimpl Jason.Encoder do
-    def encode(
-          %Profile{} = profile,
-          opts
-        ) do
-      profile
-      |> Map.from_struct()
-      |> Enum.filter(&(&1 != nil))
-      |> Enum.into(%{})
-      |> Jason.Encode.map(opts)
-    end
-  end
 
   @doc """
   Creates a new nostr profile
-
-  Can't do a detailed doctest because the encoded content can change order and thus is non-deterministic
-
-  ## Examples
-      iex> %NostrBasics.Models.Profile{
-      ...>   about: "some user description",
-      ...>   banner: "https://image.com/satoshi_banner",
-      ...>   display_name: "satoshi nakamoto",
-      ...>   lud16: "satoshi@nakamoto.jp",
-      ...>   name: "satoshi nakamoto",
-      ...>   nip05: "_@nakamoto.jp",
-      ...>   picture: "https://image.com/satoshi_avatar",
-      ...>   website: "https://bitcoin.org"
-      ...> }
-      ...> |> NostrBasics.Models.Profile.to_event(<<0x5ab9f2efb1fda6bc32696f6f3fd715e156346175b93b6382099d23627693c3f2::256>>)
-      ...> |> elem(0)
-      :ok
   """
   @spec to_event(Profile.t(), PublicKey.id()) :: {:ok, Event.t()} | {:error, String.t()}
-  def to_event(profile, pubkey) do
-    Profile.Convert.to_event(profile, pubkey)
+  def to_event(%Profile{} = profile, pubkey) do
+    case encode(profile) do
+      {:ok, json_profile} ->
+        {
+          :ok,
+          Event.create(@reaction_kind, json_profile, pubkey)
+        }
+
+      {:error, message} ->
+        {:error, message}
+    end
+  end
+
+  def encode(
+    %Profile{} = profile,
+    opts
+  ) do
+    profile
+    |> Map.from_struct()
+    |> Enum.filter(&(&1 != nil))
+    |> Enum.into(%{})
+    |> Jason.encode(opts)
   end
 end

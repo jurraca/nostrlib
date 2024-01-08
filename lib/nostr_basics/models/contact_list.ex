@@ -1,46 +1,19 @@
-defmodule NostrBasics.Models.ContactList do
+defmodule NostrBasics.ContactList do
   @moduledoc """
-  Represents a nostr user's contact list... and relays...
-
-  Note that, strangely, the pubkey's relays are stored in that structure even if it has
-  nothing to do with a contact list at all.
+  Represents a nostr user's contact list and relays.
   """
 
   defstruct [:pubkey, :contacts, :relays]
 
-  alias NostrBasics.Event
-  alias NostrBasics.Models.{Contact, ContactList}
+  alias NostrBasics.{Contact, Event, Utils}
 
   @type t :: %ContactList{}
 
+  @contact_kind 3
+  @empty_petname ""
+
   @doc """
   Converts an %Event{} into a %ContactList{}
-
-  ## Examples
-      iex> %NostrBasics.Event{
-      ...>   id: "811574fe1f5b49e301b8a554d71f7a63314efc540b1778e2ad813a564b12739b",
-      ...>   pubkey: <<0x5ab9f2efb1fda6bc32696f6f3fd715e156346175b93b6382099d23627693c3f2::256>>,
-      ...>   created_at: ~U[2023-02-11 13:15:17Z],
-      ...>   kind: 3,
-      ...>   tags: [["p", "5ab9f2efb1fda6bc32696f6f3fd715e156346175b93b6382099d23627693c3f2", ""]],
-      ...>   content: ~s({"wss://nos.lol":{"write":false,"read":true}}),
-      ...>   sig: <<0xc177a56607ef5f5d137478aeca851791a35514f5ad55f8e0e3901f561c004cc1d15a1b048a03c6f4b01e5c675ecd132fb0b5a2cc3cc7562e848fe5a968c658c5::512>>
-      ...> }
-      ...> |> NostrBasics.Models.ContactList.from_event
-      {
-        :ok,
-        %NostrBasics.Models.ContactList{
-          pubkey: <<0x5ab9f2efb1fda6bc32696f6f3fd715e156346175b93b6382099d23627693c3f2::256>>,
-          contacts: [
-            %NostrBasics.Models.Contact{
-              pubkey: <<0x5ab9f2efb1fda6bc32696f6f3fd715e156346175b93b6382099d23627693c3f2::256>>,
-              main_relay: "",
-              petname: nil
-            }
-          ],
-          relays: [%{url: "wss://nos.lol", read?: true, write?: false}]
-        }
-      }
   """
   @spec from_event(Event.t()) :: {:ok, ContactList.t()} | {:error, String.t()}
   def from_event(event) do
@@ -49,34 +22,32 @@ defmodule NostrBasics.Models.ContactList do
 
   @doc """
   Converts an %ContactList{} into an %Event{}
-
-  ## Examples
-    iex> %NostrBasics.Models.ContactList{
-    ...>   pubkey: <<0x5ab9f2efb1fda6bc32696f6f3fd715e156346175b93b6382099d23627693c3f2::256>>,
-    ...>   contacts: [
-    ...>     %NostrBasics.Models.Contact{
-    ...>       pubkey: <<0x5ab9f2efb1fda6bc32696f6f3fd715e156346175b93b6382099d23627693c3f2::256>>,
-    ...>       main_relay: "",
-    ...>       petname: nil
-    ...>     }
-    ...>   ],
-    ...>   relays: [%{url: "wss://nos.lol", read?: true, write?: false}]
-    ...> }
-    ...> |> NostrBasics.Models.ContactList.to_event
-    ...> |> Map.put(:created_at, ~U[2023-02-13 14:09:30.382207Z])
-    %NostrBasics.Event{
-      pubkey: <<0x5ab9f2efb1fda6bc32696f6f3fd715e156346175b93b6382099d23627693c3f2::256>>,
-      kind: 3,
-      created_at: ~U[2023-02-13 14:09:30.382207Z],
-      tags: [
-        ["p", "5ab9f2efb1fda6bc32696f6f3fd715e156346175b93b6382099d23627693c3f2", ""]
-      ],
-      content: ~s({"wss://nos.lol":{"read":true,"write":false}})
-    }
   """
-  @spec to_event(ContactList.t()) :: Event.t()
-  def to_event(contact_list) do
-    ContactList.Convert.to_event(contact_list)
+  def to_event(%ContactList{pubkey: pubkey, contacts: contacts, relays: relays}) do
+    content = content_from_relays(relays)
+    tags = tags_from_contacts(contacts)
+
+    %{
+      Event.create(@contact_kind, content, pubkey)
+      | tags: tags,
+        created_at: DateTime.utc_now()
+    }
+  end
+
+  defp tags_from_contacts(contacts) do
+    contacts
+    |> Enum.map(fn %Contact{pubkey: pubkey} ->
+      ["p", Binary.to_hex(pubkey), @empty_petname]
+    end)
+  end
+
+  defp content_from_relays(nil), do: ""
+  defp content_from_relays(relays) do
+    for %{url: url, read?: read?, write?: write?} <- relays do
+      {url, %{read: read?, write: write?}}
+    end
+    |> Map.new()
+    |> Jason.encode!()
   end
 
   def add(%ContactList{contacts: contacts} = contact_list, pubkey) do

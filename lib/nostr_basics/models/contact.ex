@@ -1,4 +1,4 @@
-defmodule NostrBasics.Models.Contact do
+defmodule NostrBasics.Contact do
   @moduledoc """
   Represents a nostr contact that's being followed by someone
   """

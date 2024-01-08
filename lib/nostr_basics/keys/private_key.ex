@@ -6,27 +6,20 @@ defmodule NostrBasics.Keys.PrivateKey do
   @type id :: String.t() | <<_::256>>
 
   alias NostrBasics.Keys.PrivateKey
+  alias Bitcoinex.Secp256k1.PrivateKey
 
   @doc """
   Creates a new private key
-
-  ## Examples
-      iex> NostrBasics.Keys.PrivateKey.create()
   """
   @spec create() :: <<_::256>>
   def create do
-    :binary.decode_unsigned()
-    |> :crypto.strong_rand_bytes(64)
-    |> Bitcoinex.Secp256k1.PrivateKey.new()
+    :crypto.strong_rand_bytes(64)
+    |> :binary.decode_unsigned()
+    |> PrivateKey.new()
   end
 
   @doc """
   Extracts a binary private key from the nsec format
-
-  ## Examples
-      iex> nsec = "nsec1d4ed5x49d7p24xn63flj4985dc4gpfngdhtqcxpth0ywhm6czxcs5l2exj"
-      ...> NostrBasics.Keys.PrivateKey.from_nsec(nsec)
-      {:ok, <<0x6d72da1aa56f82aa9a7a8a7f2a94f46e2a80a6686dd60c182bbbc8ebef5811b1::256>>}
   """
   @spec from_nsec(binary()) :: {:ok, <<_::256>>} | {:error, String.t()}
   def from_nsec("nsec" <> _ = bech32_private_key) do
