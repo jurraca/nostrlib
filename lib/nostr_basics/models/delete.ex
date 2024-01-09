@@ -6,7 +6,7 @@ defmodule NostrBasics.Delete do
   defstruct [:note, event_ids: []]
 
   alias __MODULE__
-  alias NostrBasics.Event
+    alias NostrBasics.{Event, Utils}
   alias NostrBasics.Keys.PublicKey
 
   @type t :: %__MODULE__{}
@@ -60,7 +60,7 @@ defmodule NostrBasics.Delete do
 
   defp to_hex(event_id) do
     with {:ok, binary_event_id} <- Event.Id.to_binary(event_id),
-         {:ok, _, hex_event_id} <- Event.Id.to_hex(binary_event_id) do
+         {:ok, _, hex_event_id} <- Utils.to_hex(binary_event_id) do
       {:ok, hex_event_id}
     else
       {:error, message} ->

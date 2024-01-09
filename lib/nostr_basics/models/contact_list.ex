@@ -17,9 +17,7 @@ defmodule NostrBasics.ContactList do
   Converts an %Event{} into a %ContactList{}
   """
   @spec from_event(Event.t()) :: {:ok, ContactList.t()} | {:error, String.t()}
-  def from_event(event) do
-    ContactList.Extract.from_event(event)
-  end
+  def from_event(event), do: ContactList.Extract.from_event(event)
 
   @doc """
   Converts an %ContactList{} into an %Event{}

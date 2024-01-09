@@ -6,7 +6,7 @@ defmodule NostrBasics.Repost do
   defstruct [:event, :relays]
 
   alias __MODULE__
-  alias NostrBasics.Event
+  alias NostrBasics.{Event, Utils}
   alias NostrBasics.Keys.PublicKey
 
   @type t :: %__MODULE__{}
@@ -41,7 +41,7 @@ defmodule NostrBasics.Repost do
           :ok,
           [
             ["e", hex_event_id],
-            ["p", pubkey |> PublicKey.to_hex()]
+            ["p", Utils.to_hex(pubkey)]
           ]
         }
 
@@ -52,7 +52,7 @@ defmodule NostrBasics.Repost do
 
   defp to_hex(event_id) do
     with {:ok, binary_event_id} <- Event.Id.to_binary(event_id),
-         {:ok, _, hex_event_id} <- Event.Id.to_hex(binary_event_id) do
+         {:ok, _, hex_event_id} <- Utils.to_hex(binary_event_id) do
       {:ok, hex_event_id}
     else
       {:error, message} ->

@@ -8,7 +8,7 @@ defmodule NostrBasics.Reaction do
   defstruct [:event_id, :event_pubkey, :content]
 
   alias __MODULE__
-  alias NostrBasics.Event
+  alias NostrBasics.{Event, Utils}
   alias NostrBasics.Keys.PublicKey
 
   @type t :: %__MODULE__{}
@@ -41,8 +41,8 @@ defmodule NostrBasics.Reaction do
   defp create_tags(event_id, pubkey) do
     with {:ok, binary_pubkey} <- PublicKey.to_binary(pubkey),
          {:ok, binary_event_id} <- Event.Id.to_binary(event_id),
-         {:ok, _, hex_event_id} <- Event.Id.to_hex(binary_event_id) do
-      hex_pubkey = PublicKey.to_hex(binary_pubkey)
+         {:ok, _, hex_event_id} <- Utils.to_hex(binary_event_id) do
+      hex_pubkey = Utils.to_hex(binary_pubkey)
 
       {
         :ok,

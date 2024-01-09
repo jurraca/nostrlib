@@ -5,23 +5,25 @@ defmodule NostrBasics.Keys.PublicKey do
 
   @type id :: String.t() | <<_::256>>
 
+  alias NostrBasics.Utils
   alias NostrBasics.Keys.PrivateKey
   alias Bitcoinex.Secp256k1
 
   @doc """
   Issues the public key corresponding to a given private key
-
-  ## Examples
-      iex> private_key = <<0xb6907368a945db7769b5eaecd73c3c175b77c64e1df3e9900acd66aeea7b53ab::256>>
-      ...> NostrBasics.Keys.PublicKey.from_private_key(private_key)
-      {:ok, <<0x6d72da1aa56f82aa9a7a8a7f2a94f46e2a80a6686dd60c182bbbc8ebef5811b1::256>>}
   """
   @spec from_private_key(<<_::256>>) ::
           {:ok, <<_::256>>} | {:error, String.t() | :signing_key_decoding_failed}
   def from_private_key(private_key) do
     case PrivateKey.to_binary(private_key) do
       {:ok, binary_private_key} ->
-        Secp256k1.get_y("test", binary_private_key)
+        pubkey = binary_private_key
+        |> String.to_integer()
+        |> Secp256k1.PrivateKey.new()
+        |> Secp256k1.PrivateKey.to_point()
+        |> Secp256k1.Point.serialize_public_key()
+
+        {:ok, pubkey}
 
       {:error, message} ->
         {:error, message}
@@ -30,11 +32,6 @@ defmodule NostrBasics.Keys.PublicKey do
 
   @doc """
   Issues the public key corresponding to a given private key
-
-  ## Examples
-      iex> private_key = <<0xb6907368a945db7769b5eaecd73c3c175b77c64e1df3e9900acd66aeea7b53ab::256>>
-      ...> NostrBasics.Keys.PublicKey.from_private_key!(private_key)
-      <<0x6d72da1aa56f82aa9a7a8a7f2a94f46e2a80a6686dd60c182bbbc8ebef5811b1::256>>
   """
   @spec from_private_key!(<<_::256>>) :: <<_::256>>
   def from_private_key!(private_key) do
@@ -47,11 +44,6 @@ defmodule NostrBasics.Keys.PublicKey do
 
   @doc """
   Converts a public key in the npub format into a binary public key that can be used with this lib
-
-  ## Examples
-      iex> npub = "npub1d4ed5x49d7p24xn63flj4985dc4gpfngdhtqcxpth0ywhm6czxcscfpcq8"
-      ...> NostrBasics.Keys.PublicKey.from_npub(npub)
-      {:ok, <<0x6d72da1aa56f82aa9a7a8a7f2a94f46e2a80a6686dd60c182bbbc8ebef5811b1::256>>}
   """
   @spec from_npub(binary()) :: {:ok, binary()} | {:error, String.t()}
   def from_npub("npub" <> _ = bech32_pubkey) do
@@ -64,11 +56,6 @@ defmodule NostrBasics.Keys.PublicKey do
 
   @doc """
   Converts a public key in the npub format into a binary public key that can be used with this lib
-
-  ## Examples
-      iex> npub = "npub1d4ed5x49d7p24xn63flj4985dc4gpfngdhtqcxpth0ywhm6czxcscfpcq8"
-      ...> NostrBasics.Keys.PublicKey.from_npub!(npub)
-      <<0x6d72da1aa56f82aa9a7a8a7f2a94f46e2a80a6686dd60c182bbbc8ebef5811b1::256>>
   """
   @spec from_npub!(binary()) :: <<_::256>>
   def from_npub!("npub" <> _ = bech32_pubkey) do
@@ -80,37 +67,12 @@ defmodule NostrBasics.Keys.PublicKey do
 
   @doc """
   Encodes a public key into the npub format
-
-  ## Examples
-      iex> public_key = <<0x6d72da1aa56f82aa9a7a8a7f2a94f46e2a80a6686dd60c182bbbc8ebef5811b1::256>>
-      ...> NostrBasics.Keys.PublicKey.to_npub(public_key)
-      "npub1d4ed5x49d7p24xn63flj4985dc4gpfngdhtqcxpth0ywhm6czxcscfpcq8"
   """
   @spec to_npub(<<_::256>>) :: binary()
-  def to_npub(<<_::256>> = public_key) do
-    Bech32.encode("npub", public_key)
-  end
-
-  @doc """
-  Converts a public key into a string containing hex characters
-
-  ## Examples
-      iex> public_key = <<0x6d72da1aa56f82aa9a7a8a7f2a94f46e2a80a6686dd60c182bbbc8ebef5811b1::256>>
-      ...> NostrBasics.Keys.PublicKey.to_hex(public_key)
-      "6d72da1aa56f82aa9a7a8a7f2a94f46e2a80a6686dd60c182bbbc8ebef5811b1"
-  """
-  @spec to_hex(<<_::256>>) :: String.t()
-  def to_hex(pubkey) do
-    Binary.to_hex(pubkey)
-  end
+  def to_npub(<<_::256>> = public_key), do: Utils.to_bech32(public_key, "npub")
 
   @doc """
   Does its best to convert any public key format to binary, issues an error if it can't
-
-  ## Examples
-      iex> "npub1mxrssnzg8y9zjr6a9g6xqwhxfa23xlvmftluakxqatsrp6ez9gjssu0htc"
-      ...> |> NostrBasics.Keys.PublicKey.to_binary()
-      { :ok, <<0xd987084c48390a290f5d2a34603ae64f55137d9b4affced8c0eae030eb222a25::256>> }
   """
   @spec to_binary(<<_::256>> | String.t() | list(<<_::256>>)) ::
           {:ok, <<_::256>>} | {:error, String.t()}

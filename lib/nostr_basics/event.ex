@@ -9,7 +9,6 @@ defmodule NostrBasics.Event do
   defstruct [:id, :pubkey, :created_at, :kind, :tags, :content, :sig]
 
   alias NostrBasics.Utils
-  alias Bitcoinex.{Bech32}
   alias Bitcoinex.Secp256k1.{Point, Schnorr, Signature}
 
   @doc """
@@ -28,7 +27,7 @@ defmodule NostrBasics.Event do
 
   def sign_event(%__MODULE__{id: id} = event, privkey) do
     aux_bytes = :crypto.strong_rand_bytes(32) |> :binary.decode_unsigned()
-    id_bin = Base.decode16!(id, case: :lower) |> :binary.decode_unsigned()
+    id_bin = id |> Utils.from_hex() |> :binary.decode_unsigned()
 
     case Schnorr.sign(privkey, id_bin, aux_bytes) do
       {:ok, sig} ->
@@ -102,22 +101,19 @@ defmodule NostrBasics.Event do
     event
     |> nostr_encode()
     |> Utils.sha256()
-    |> Base.encode16(case: :lower)
+    |> Utils.to_hex()
   end
 
-#  @doc """
-#  Encodes an event key into the nevent format
-#  """
-#  @spec to_nevent(%__MODULE__{}) :: binary()
-#  def to_nevent(%__MODULE__{id: nil} = event) do
-#    id = create_id(event)
-#    Bech32.encode("nevent", id, :bech32)
-#  end
-#
-#  def to_nevent(%__MODULE__{id: id}) do
-#    bin = Base.decode16!(id, case: :lower) |> :binary.bin_to_list()
-#    Bech32.encode("nevent", bin, :bech32)
-#  end
+  @doc """
+  Encodes an event key into the nevent format
+  """
+  @spec to_nevent(%__MODULE__{}) :: binary()
+  def to_nevent(%__MODULE__{id: nil} = event) do
+    id = create_id(event)
+    Bech32.encode("nevent", id)
+  end
+
+  def to_nevent(%__MODULE__{id: id}), do: Bech32.encode("nevent", id)
 
   @spec validate_event(%__MODULE__{}) :: :ok | {:error, String.t()}
   def validate_event(%__MODULE__{} = event) do

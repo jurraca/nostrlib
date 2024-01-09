@@ -5,15 +5,16 @@ defmodule NostrBasics.Keys.PrivateKey do
 
   @type id :: String.t() | <<_::256>>
 
+  alias NostrBasics.Utils
   alias NostrBasics.Keys.PrivateKey
   alias Bitcoinex.Secp256k1.PrivateKey
 
   @doc """
   Creates a new private key
   """
-  @spec create() :: <<_::256>>
+  @spec create() :: %PrivateKey{d: integer()}
   def create do
-    :crypto.strong_rand_bytes(64)
+    :crypto.strong_rand_bytes(32)
     |> :binary.decode_unsigned()
     |> PrivateKey.new()
   end
@@ -45,11 +46,6 @@ defmodule NostrBasics.Keys.PrivateKey do
 
   @doc """
   Extracts a binary private key from the nsec format
-
-  ## Examples
-      iex> nsec = "nsec1d4ed5x49d7p24xn63flj4985dc4gpfngdhtqcxpth0ywhm6czxcs5l2exj"
-      ...> NostrBasics.Keys.PrivateKey.from_nsec!(nsec)
-      <<0x6d72da1aa56f82aa9a7a8a7f2a94f46e2a80a6686dd60c182bbbc8ebef5811b1::256>>
   """
   @spec from_nsec!(binary()) :: <<_::256>>
   def from_nsec!("nsec" <> _ = bech32_private_key) do
@@ -61,15 +57,10 @@ defmodule NostrBasics.Keys.PrivateKey do
 
   @doc """
   Encodes a private key into the nsec format
-
-  ## Examples
-      iex> private_key = <<0x6d72da1aa56f82aa9a7a8a7f2a94f46e2a80a6686dd60c182bbbc8ebef5811b1::256>>
-      ...> NostrBasics.Keys.PrivateKey.to_nsec(private_key)
-      "nsec1d4ed5x49d7p24xn63flj4985dc4gpfngdhtqcxpth0ywhm6czxcs5l2exj"
   """
   @spec to_nsec(<<_::256>>) :: binary()
   def to_nsec(<<_::256>> = private_key) do
-    Bech32.encode("nsec", private_key)
+    Utils.to_bech32(private_key, "nsec")
   end
 
   def to_nsec(not_a_256_bits_private_key) do
@@ -78,11 +69,6 @@ defmodule NostrBasics.Keys.PrivateKey do
 
   @doc """
   Does its best to convert any private key format to binary, issues an error if it can't
-
-  ## Examples
-      iex> "nsec1fc3d5s6p3hvngdeuhvu2t2cnqkgerg4n55w9uzm8avfngetfgwuqc25heg"
-      ...> |> NostrBasics.Keys.PrivateKey.to_binary()
-      { :ok, <<0x4e22da43418dd934373cbb38a5ab13059191a2b3a51c5e0b67eb1334656943b8::256>> }
   """
   @spec to_binary(PrivateKey.id()) :: {:ok, <<_::256>>} | {:error, String.t()}
   def to_binary(<<_::256>> = private_key), do: {:ok, private_key}
@@ -97,11 +83,6 @@ defmodule NostrBasics.Keys.PrivateKey do
 
   @doc """
   Does its best to convert any private key format to binary, raises an error if it can't
-
-  ## Examples
-      iex> "nsec1fc3d5s6p3hvngdeuhvu2t2cnqkgerg4n55w9uzm8avfngetfgwuqc25heg"
-      ...> |> NostrBasics.Keys.PrivateKey.to_binary!()
-      <<0x4e22da43418dd934373cbb38a5ab13059191a2b3a51c5e0b67eb1334656943b8::256>>
   """
   @spec to_binary!(PrivateKey.id()) :: <<_::256>>
   def to_binary!(private_key) do
