@@ -15,6 +15,8 @@ defmodule NostrBasics.Filter do
     p: []
   ]
 
+  alias __MODULE__
+
   @type t :: %__MODULE__{}
 
   @doc """
@@ -63,7 +65,7 @@ defmodule NostrBasics.Filter do
   @spec to_query(Filter.t()) :: {:ok, String.t()} | {:error, String.t()}
   def to_query(filter) do
     since_timestamp = if(filter.since, do: DateTime.to_unix(filter.since))
-    hex_authors = encode_authors(authors)
+    hex_authors = encode_authors(filter.authors)
 
     filter
     |> Map.put(:timestamp, since_timestamp)

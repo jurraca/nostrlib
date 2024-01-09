@@ -5,14 +5,12 @@ defmodule NostrBasics.Delete do
 
   defstruct [:note, event_ids: []]
 
+  alias __MODULE__
   alias NostrBasics.Event
   alias NostrBasics.Keys.PublicKey
 
-  @type t :: %Delete{}
+  @type t :: %__MODULE__{}
 
-  @doc """
-  Convert a delete model to a nostr event
-  """
   @delete_kind 5
 
   @doc """

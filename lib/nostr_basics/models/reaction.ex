@@ -7,10 +7,11 @@ defmodule NostrBasics.Reaction do
 
   defstruct [:event_id, :event_pubkey, :content]
 
+  alias __MODULE__
   alias NostrBasics.Event
   alias NostrBasics.Keys.PublicKey
 
-  @type t :: %Reaction{}
+  @type t :: %__MODULE__{}
   @reaction_kind 7
 
   @doc """

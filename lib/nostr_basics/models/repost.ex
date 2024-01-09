@@ -5,10 +5,11 @@ defmodule NostrBasics.Repost do
 
   defstruct [:event, :relays]
 
+  alias __MODULE__
   alias NostrBasics.Event
   alias NostrBasics.Keys.PublicKey
 
-  @type t :: %Repost{}
+  @type t :: %__MODULE__{}
 
   @repost_kind 6
 

@@ -1,7 +1,7 @@
 defimpl Inspect, for: NostrBasics.Models.Contact do
-  alias NostrBasics.HexBinary
+  alias NostrBasics.{Contact, HexBinary}
 
-  def inspect(%NostrBasics.Models.Contact{} = contact, opts) do
+  def inspect(%Contact{} = contact, opts) do
     %{
       contact
       | pubkey: %HexBinary{data: contact.pubkey}

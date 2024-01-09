@@ -9,6 +9,7 @@ defmodule NostrBasics.Profile do
   @reaction_kind 0
 
   alias NostrBasics.Event
+  alias __MODULE__
 
   @doc """
   Creates a new nostr profile
@@ -29,7 +30,7 @@ defmodule NostrBasics.Profile do
 
   def encode(
     %Profile{} = profile,
-    opts
+    opts \\ []
   ) do
     profile
     |> Map.from_struct()

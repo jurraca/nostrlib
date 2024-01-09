@@ -5,9 +5,10 @@ defmodule NostrBasics.ContactList do
 
   defstruct [:pubkey, :contacts, :relays]
 
+  alias __MODULE__
   alias NostrBasics.{Contact, Event, Utils}
 
-  @type t :: %ContactList{}
+  @type t :: %__MODULE__{}
 
   @contact_kind 3
   @empty_petname ""
@@ -37,7 +38,7 @@ defmodule NostrBasics.ContactList do
   defp tags_from_contacts(contacts) do
     contacts
     |> Enum.map(fn %Contact{pubkey: pubkey} ->
-      ["p", Binary.to_hex(pubkey), @empty_petname]
+      ["p", Utils.to_hex(pubkey), @empty_petname]
     end)
   end
 

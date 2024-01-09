@@ -8,7 +8,8 @@ defmodule NostrBasics.Event do
   #@derive Jason.Encoder
   defstruct [:id, :pubkey, :created_at, :kind, :tags, :content, :sig]
 
-  alias Bitcoinex.{Bech32, Utils}
+  alias NostrBasics.Utils
+  alias Bitcoinex.{Bech32}
   alias Bitcoinex.Secp256k1.{Point, Schnorr, Signature}
 
   @doc """
@@ -48,15 +49,7 @@ defmodule NostrBasics.Event do
   Converts a NIP-01 JSON string into a %Event{}
   """
   @spec decode(String.t()) :: {:ok, %__MODULE__{}} | {:error, String.t()}
-  def decode(json_event) do
-    case Jason.decode(json_event) do
-      {:ok, event} ->
-        {:ok, event}
-
-      {:error, %Jason.DecodeError{position: position, token: token}} ->
-        {:error, "error decoding JSON at position #{position}: #{token}"}
-    end
-  end
+  def decode(json_event) when is_binary(json_event), do: Utils.json_decode(json_event)
 
   @spec decode!(String.t()) :: %__MODULE__{}
   def decode!(string_event) do
@@ -88,10 +81,8 @@ defmodule NostrBasics.Event do
       tags,
       content
     ]
-    |> Jason.encode!()
+    |> Utils.json_encode()
   end
-
-  def decode(event) when is_binary(event), do: Jason.decode(event)
 
   @doc """
   Adds an ID to an event that doesn't have one

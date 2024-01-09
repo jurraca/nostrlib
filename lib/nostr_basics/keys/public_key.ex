@@ -21,7 +21,7 @@ defmodule NostrBasics.Keys.PublicKey do
   def from_private_key(private_key) do
     case PrivateKey.to_binary(private_key) do
       {:ok, binary_private_key} ->
-        Secp256k1.get_y(binary_private_key)
+        Secp256k1.get_y("test", binary_private_key)
 
       {:error, message} ->
         {:error, message}

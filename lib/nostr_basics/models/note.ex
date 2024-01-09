@@ -8,15 +8,17 @@ defmodule NostrBasics.Note do
   alias NostrBasics.Event
   alias NostrBasics.Keys.PublicKey
 
-  @type t :: %Note{}
+  @type t :: %__MODULE__{}
   @type id :: String.t() | <<_::256>>
+
+  @note_kind 1
 
   @doc """
   Creates a new nostr note
   """
   @spec to_event(Note.t(), PublicKey.id()) :: {:ok, Event.t()} | {:error, String.t()}
   def to_event(note, pubkey) do
-    Event.create(@note_kind, content, note_pubkey)
+    Event.create(@note_kind, note, pubkey)
   end
 
   @doc """
