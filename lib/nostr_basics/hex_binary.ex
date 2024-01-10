@@ -37,13 +37,8 @@ defimpl Inspect, for: NostrBasics.HexBinary do
 
   @byte 8
 
-  def inspect(%HexBinary{data: nil}, _opts) do
-    "nil"
-  end
-
-  def inspect(%HexBinary{} = binary, _opts) do
-    print_compact_bitstring(binary.data)
-  end
+  def inspect(%HexBinary{data: nil}, _opts), do: "nil"
+  def inspect(%HexBinary{data: data}, _opts), do: print_compact_bitstring(data)
 
   defp print_compact_bitstring(bitstring) do
     hex_data = Base.encode16(bitstring, case: :lower)

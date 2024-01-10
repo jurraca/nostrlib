@@ -10,7 +10,7 @@ defmodule NostrBasics.ClientMessage do
   alias NostrBasics.{Event, Filter, CloseRequest}
 
   @doc """
-  Converts a client message in string format to the actual related Elixir structure
+  Converts a client message in string format to the internal struct
   """
   @spec parse(String.t()) ::
           {:event, Event.t()}

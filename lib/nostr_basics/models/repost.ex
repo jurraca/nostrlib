@@ -64,12 +64,12 @@ defmodule NostrBasics.Repost do
   defp content_from_event(%Event{} = event, relays) do
     %{
       content: event.content,
-      created_at: event.created_at |> DateTime.to_unix(),
+      created_at: DateTime.to_unix(event.created_at),
       id: event.id,
       kind: event.kind,
-      pubkey: event.pubkey |> Binary.to_hex(),
+      pubkey: Utils.to_hex(event.pubkey),
       relays: relays,
-      sig: event.sig |> Binary.to_hex(),
+      sig: Utils.to_hex(event.sig),
       tags: event.tags
     }
     |> Jason.encode()

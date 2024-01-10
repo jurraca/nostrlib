@@ -60,7 +60,6 @@ defmodule NostrBasics.MixProject do
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
       {:jason, "~> 1.4"},
       {:bitcoinex, "~> 0.1.7"},
-      {:binary, "~> 0.0.5"},
       {:bech32, "~> 1.0"}
     ]
   end
