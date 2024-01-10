@@ -5,7 +5,7 @@ defmodule NostrBasics.Event do
 
   require Logger
 
-  #@derive Jason.Encoder
+  # @derive Jason.Encoder
   defstruct [:id, :pubkey, :created_at, :kind, :tags, :content, :sig]
 
   alias NostrBasics.Utils
@@ -33,7 +33,9 @@ defmodule NostrBasics.Event do
       {:ok, sig} ->
         serialized_sig = serialize_sig!(sig)
         {:ok, %{event | sig: serialized_sig}}
-      {:error, message} when is_atom(message) -> {:error, Atom.to_string(message)}
+
+      {:error, message} when is_atom(message) ->
+        {:error, Atom.to_string(message)}
     end
   end
 

@@ -29,9 +29,9 @@ defmodule NostrBasics.Profile do
   end
 
   def encode(
-    %Profile{} = profile,
-    opts \\ []
-  ) do
+        %Profile{} = profile,
+        opts \\ []
+      ) do
     profile
     |> Map.from_struct()
     |> Enum.filter(&(&1 != nil))

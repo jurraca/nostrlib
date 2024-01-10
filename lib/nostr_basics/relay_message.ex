@@ -32,11 +32,11 @@ defmodule NostrBasics.RelayMessage do
   end
 
   @spec decode(list()) ::
-  {:event, String.t(), Event.t()}
-  | {:notice, String.t()}
-  | {:end_of_stored_events, String.t()}
-  | {:ok, String.t(), boolean(), String.t()}
-  | {:unknown, String.t()}
+          {:event, String.t(), Event.t()}
+          | {:notice, String.t()}
+          | {:end_of_stored_events, String.t()}
+          | {:ok, String.t(), boolean(), String.t()}
+          | {:unknown, String.t()}
   def decode(["EVENT", subscription_id, encoded_event]) do
     case Event.decode(encoded_event) do
       {:ok, event} -> {:event, subscription_id, event}
@@ -45,18 +45,18 @@ defmodule NostrBasics.RelayMessage do
   end
 
   def decode(["NOTICE", message]) do
-  {:notice, message}
+    {:notice, message}
   end
 
   def decode(["EOSE", subscription_id]) do
-  {:end_of_stored_events, subscription_id}
+    {:end_of_stored_events, subscription_id}
   end
 
   def decode(["OK", event_id, success?, message]) do
-  {:ok, event_id, success?, message}
+    {:ok, event_id, success?, message}
   end
 
   def decode(_unknown_message) do
-  {:unknown, "Unknown nostr message type"}
+    {:unknown, "Unknown nostr message type"}
   end
 end

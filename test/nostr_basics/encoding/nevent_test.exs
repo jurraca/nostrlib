@@ -5,4 +5,3 @@ defmodule NostrBasics.Encoding.NeventTest do
 
   doctest Nevent
 end
-

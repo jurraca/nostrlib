@@ -56,7 +56,7 @@ defmodule NostrBasics.Encoding.Nevent do
   @spec encode(Nevent.t()) :: binary()
   def encode(%Nevent{} = nevent) do
     nevent
-    |> Instance.to_tokens()  
+    |> Instance.to_tokens()
     |> Tokens.to_bech32()
   end
 end

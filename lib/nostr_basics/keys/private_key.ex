@@ -59,9 +59,7 @@ defmodule NostrBasics.Keys.PrivateKey do
   Encodes a private key into the nsec format
   """
   @spec to_nsec(<<_::256>>) :: binary()
-  def to_nsec(<<_::256>> = private_key) do
-    Utils.to_bech32(private_key, "nsec")
-  end
+  def to_nsec(<<_::256>> = private_key), do: Utils.to_bech32(private_key, "nsec")
 
   def to_nsec(not_a_256_bits_private_key) do
     {:error, "#{not_a_256_bits_private_key} should be a 256 bits private key"}

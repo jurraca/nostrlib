@@ -56,7 +56,7 @@ defmodule NostrBasics.Filter do
     %Filter{}
     |> Map.merge(atom_map)
     |> Map.put(:subscription_id, subscription_id)
-    |> Map.put(:authors, decode_authors(encoded_request) )
+    |> Map.put(:authors, decode_authors(encoded_request))
   end
 
   @doc """
@@ -74,11 +74,13 @@ defmodule NostrBasics.Filter do
   end
 
   defp decode_authors(%{"authors" => nil}), do: []
+
   defp decode_authors(%{"authors" => authors}) do
     Enum.map(authors, &Base.decode16!(&1, case: :lower))
   end
 
   defp encode_authors(%{"authors" => nil}), do: []
+
   defp encode_authors(%{"authors" => authors}) do
     Enum.map(authors, &Base.encode16(&1, case: :lower))
   end

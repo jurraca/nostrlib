@@ -5,4 +5,3 @@ defmodule NostrBasics.Encoding.Nevent.InstanceTest do
 
   doctest Instance
 end
-

@@ -12,14 +12,21 @@ defmodule NostrBasics.ContactList.Extract do
   Converts an %Event{} into a %ContactList{}
   """
   @spec from_event(Event.t()) :: {:ok, ContactList.t()} | {:error, String.t()}
-  def from_event(%{"kind" => @contact_kind, "pubkey" => pubkey, "content" => content, "tags" => tags}) do
+  def from_event(%{
+        "kind" => @contact_kind,
+        "pubkey" => pubkey,
+        "content" => content,
+        "tags" => tags
+      }) do
     relays = extract_relays(content)
     contacts = Enum.map(tags, &parse_contact/1)
-    {:ok, %ContactList{
-      pubkey: pubkey,
-      contacts: contacts,
-      relays: relays
-    }}
+
+    {:ok,
+     %ContactList{
+       pubkey: pubkey,
+       contacts: contacts,
+       relays: relays
+     }}
   end
 
   def from_event(_) do

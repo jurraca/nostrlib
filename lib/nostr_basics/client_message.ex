@@ -28,23 +28,23 @@ defmodule NostrBasics.ClientMessage do
   end
 
   @spec decode(list()) ::
-  {:event, Event.t()}
-  | {:req, list(Filter.t())}
-  | {:close, CloseRequest.t()}
-  | {:unknown, String.t()}
+          {:event, Event.t()}
+          | {:req, list(Filter.t())}
+          | {:close, CloseRequest.t()}
+          | {:unknown, String.t()}
   def decode(["EVENT", encoded_event]) do
-  {:event, Event.decode(encoded_event)}
+    {:event, Event.decode(encoded_event)}
   end
 
   def decode(["REQ" | [subscription_id | requests]]) do
-  {:req, Enum.map(requests, &Filter.decode(&1, subscription_id))}
+    {:req, Enum.map(requests, &Filter.decode(&1, subscription_id))}
   end
 
   def decode(["CLOSE", subscription_id]) do
-  {:close, %CloseRequest{subscription_id: subscription_id}}
+    {:close, %CloseRequest{subscription_id: subscription_id}}
   end
 
   def decode(_unknown_message) do
-  {:unknown, "Unknown nostr message type"}
+    {:unknown, "Unknown nostr message type"}
   end
 end

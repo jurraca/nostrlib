@@ -63,9 +63,9 @@ defmodule NostrBasics.Encoding.Nevent.Instance do
   def to_tokens(%Nevent{id: id, kind: kind, author: author, relays: relays}) do
     relay_tokens =
       relays
-      |> Enum.map(&({@relay, &1}))
+      |> Enum.map(&{@relay, &1})
 
-    [{ @special, id }] ++ relay_tokens ++ [{@author, author}] ++ [{@kind, <<kind::32>>}]
+    [{@special, id}] ++ relay_tokens ++ [{@author, author}] ++ [{@kind, <<kind::32>>}]
   end
 
   defp add_token(%Nevent{} = nevent, @special, <<id::binary-32>>) do

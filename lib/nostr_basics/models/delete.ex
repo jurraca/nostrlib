@@ -6,7 +6,7 @@ defmodule NostrBasics.Delete do
   defstruct [:note, event_ids: []]
 
   alias __MODULE__
-    alias NostrBasics.{Event, Utils}
+  alias NostrBasics.{Event, Utils}
   alias NostrBasics.Keys.PublicKey
 
   @type t :: %__MODULE__{}

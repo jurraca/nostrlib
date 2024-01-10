@@ -17,11 +17,12 @@ defmodule NostrBasics.Keys.PublicKey do
   def from_private_key(private_key) do
     case PrivateKey.to_binary(private_key) do
       {:ok, binary_private_key} ->
-        pubkey = binary_private_key
-        |> String.to_integer()
-        |> Secp256k1.PrivateKey.new()
-        |> Secp256k1.PrivateKey.to_point()
-        |> Secp256k1.Point.serialize_public_key()
+        pubkey =
+          binary_private_key
+          |> String.to_integer()
+          |> Secp256k1.PrivateKey.new()
+          |> Secp256k1.PrivateKey.to_point()
+          |> Secp256k1.Point.serialize_public_key()
 
         {:ok, pubkey}
 
