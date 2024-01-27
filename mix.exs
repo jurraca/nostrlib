@@ -1,21 +1,23 @@
 defmodule NostrBasics.MixProject do
   use Mix.Project
 
-  @version "0.1.6"
+  @version "0.1.0"
+  @repo_url "https://git.sr.ht/~jurraca/nostrlib"
 
   def project do
     [
-      app: :nostr_basics,
+      app: :nostrlib,
+      name: "Nostrlib",
       version: @version,
-      description: "Basic structures both useful for nostr relays and clients",
+      description: "Nostr library for Elixir.",
       elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
 
       # Docs
-      name: "NostrBasics",
-      source_url: "https://github.com/roosoft/nostr_basics",
-      homepage_url: "https://github.com/roosoft/nostr_basics",
+      name: "Nostrlib",
+      source_url: @repo_url,
+      homepage_url: @repo_url,
       package: package(),
       docs: docs()
     ]
@@ -23,25 +25,21 @@ defmodule NostrBasics.MixProject do
 
   def package do
     [
-      maintainers: ["Marc Lacoursière"],
-      licenses: ["UNLICENCE"],
-      links: %{"GitHub" => "https://github.com/roosoft/nostr_basics"}
+      licenses: ["MIT"],
+      links: %{
+        "Sourcehut" => "https://git.sr.ht/~jurraca/nostrlib",
+        "GitHub" => "https://github.com/jurraca/nostrlib"
+      }
     ]
   end
 
   defp docs do
     [
-      main: "readme",
-      extras: docs_extras(),
+      main: "Nostrlib",
+      extras: [ "README.md" ],
       assets: "/guides/assets",
       source_ref: @version,
-      source_url: "https://github.com/RooSoft/nostr_basics"
-    ]
-  end
-
-  def docs_extras do
-    [
-      "README.md"
+      source_url: @repo_url
     ]
   end
 
@@ -55,7 +53,7 @@ defmodule NostrBasics.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ex_doc, "~> 0.29.1", only: [:dev], runtime: false},
+      {:ex_doc, "~> 0.29.1", only: [:docs], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev], runtime: false},
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
       {:jason, "~> 1.4"},
