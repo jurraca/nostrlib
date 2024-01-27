@@ -1,0 +1,3 @@
+defmodule Nostrlib do
+
+end

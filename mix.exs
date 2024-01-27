@@ -1,4 +1,4 @@
-defmodule NostrBasics.MixProject do
+defmodule Nostrlib.MixProject do
   use Mix.Project
 
   @version "0.1.0"
