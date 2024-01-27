@@ -46,13 +46,13 @@ defmodule NostrBasics.Event do
 
   def create(%ContactList{} = contact_list, privkey) do
     {:ok, content, tags} = ContactList.get_content_and_tags(contact_list)
-    create(@contact_kind, contact_list, privkey, [tags: tags])
+    create(@contact_kind, contact_list, privkey, tags: tags)
   end
 
   def sign_event(%__MODULE__{id: id} = event, %PrivKey{} = privkey) do
     aux_bytes = :crypto.strong_rand_bytes(32) |> :binary.decode_unsigned()
     id_bin = id |> Utils.from_hex() |> :binary.decode_unsigned()
-    #{:ok, private_key}  = PrivateKey.from_binary(privkey)
+    # {:ok, private_key}  = PrivateKey.from_binary(privkey)
     case Schnorr.sign(privkey, id_bin, aux_bytes) do
       {:ok, sig} ->
         serialized_sig = serialize_sig!(sig)
@@ -81,7 +81,6 @@ defmodule NostrBasics.Event do
         tags: tags,
         content: content
       }) do
-
     tags = if(tags, do: tags, else: [])
 
     [
@@ -100,7 +99,7 @@ defmodule NostrBasics.Event do
   """
   @spec add_id(%__MODULE__{}) :: %__MODULE__{}
   def add_id(%__MODULE__{created_at: nil} = event) do
-    event_with_ts = %{event | created_at: DateTime.utc_now() |> DateTime.to_unix}
+    event_with_ts = %{event | created_at: DateTime.utc_now() |> DateTime.to_unix()}
     add_id(event_with_ts)
   end
 
@@ -120,7 +119,7 @@ defmodule NostrBasics.Event do
     end
   end
 
-    @doc """
+  @doc """
   Converts a NIP-01 JSON string into a %Event{}
   """
   @spec decode(Map.t()) :: {:ok, %__MODULE__{}} | {:error, String.t()}
@@ -137,6 +136,7 @@ defmodule NostrBasics.Event do
   @spec decode!(String.t()) :: %__MODULE__{}
   def decode!(string_event) do
     m = Utils.decode_json(string_event)
+
     case decode(m) do
       {:ok, event} -> event
       {:error, message} -> raise message
@@ -155,7 +155,7 @@ defmodule NostrBasics.Event do
   def to_nevent(%__MODULE__{id: id}), do: Bech32.encode("nevent", id)
 
   @spec serialize_sig!(%Signature{}) :: binary()
-  def serialize_sig!(sig)  do
+  def serialize_sig!(sig) do
     sig
     |> Signature.serialize_signature()
     |> Base.encode16(case: :lower)
@@ -164,7 +164,7 @@ defmodule NostrBasics.Event do
   @spec validate_event(%__MODULE__{}) :: :ok | {:error, String.t()}
   def validate_event(%__MODULE__{} = event) do
     with true <- validate_id(event),
-         true <- validate_signature(event)  do
+         true <- validate_signature(event) do
       true
     else
       {:error, message} -> {:error, message}
@@ -185,12 +185,14 @@ defmodule NostrBasics.Event do
   @spec validate_signature(%__MODULE__{}) :: :ok | {:error, atom()}
   def validate_signature(%__MODULE__{id: id, sig: sig, pubkey: pubkey}) do
     with id_int <- id |> Utils.from_hex() |> :binary.decode_unsigned(),
-        {:ok, parsed_sig} <- Signature.parse_signature(sig) do
-          # Utils.from_hex(pubkey)
+         {:ok, parsed_sig} <- Signature.parse_signature(sig) do
+      # Utils.from_hex(pubkey)
       case Point.lift_x(pubkey) do
         {:ok, lifted_pubkey} ->
-          Schnorr.verify_signature(lifted_pubkey, id_int, parsed_sig )
-        {:error, _} = err -> err
+          Schnorr.verify_signature(lifted_pubkey, id_int, parsed_sig)
+
+        {:error, _} = err ->
+          err
       end
     end
   end

@@ -13,11 +13,12 @@ defmodule NostrBasics.Keys.PublicKey do
   """
   @spec from_private_key(PrivateKey.t()) :: {:ok, String.t()} | {:error, String.t()}
   def from_private_key(%PrivateKey{} = private_key) do
-    <<_b::size(8), pubkey::binary>> = private_key
+    <<_b::size(8), pubkey::binary>> =
+      private_key
       |> PrivateKey.to_point()
       |> Point.sec()
 
-      {:ok, pubkey}
+    {:ok, pubkey}
   end
 
   @spec from_private_key(<<_::256>>) :: {:ok, <<_::256>>}
@@ -54,6 +55,7 @@ defmodule NostrBasics.Keys.PublicKey do
   @spec to_binary(<<_::256>> | String.t() | list(<<_::256>>)) ::
           {:ok, <<_::256>>} | {:error, String.t()}
   def to_binary(<<_::256>> = public_key), do: {:ok, public_key}
+
   def to_binary("npub" <> _ = public_key) do
     case Bech32.decode(public_key) do
       {:ok, "npub", pubkey} -> {:ok, pubkey}

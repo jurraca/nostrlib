@@ -65,8 +65,10 @@ defmodule NostrBasics.Message do
   end
 
   def decode(["OK", event_id, false, message]) do
-    [reason, msg ] = String.split(message, ":")
-    {:error, event_id, "Message not accepted by relay with reason: #{reason} for event #{event_id} with message #{msg}"}
+    [reason, msg] = String.split(message, ":")
+
+    {:error, event_id,
+     "Message not accepted by relay with reason: #{reason} for event #{event_id} with message #{msg}"}
   end
 
   def decode(["CLOSED", subscription_id, nil]) do
@@ -74,8 +76,10 @@ defmodule NostrBasics.Message do
   end
 
   def decode(["CLOSED", subscription_id, message]) do
-    [reason, msg ] = String.split(message, ":")
-    {:error, "Subscription closed by relay with reason: #{reason} for event #{subscription_id} with message #{msg}"}
+    [reason, msg] = String.split(message, ":")
+
+    {:error,
+     "Subscription closed by relay with reason: #{reason} for event #{subscription_id} with message #{msg}"}
   end
 
   def decode(_unknown_message) do

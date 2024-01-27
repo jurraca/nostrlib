@@ -117,7 +117,7 @@ defmodule NostrBasics.Request do
   """
   def new(filter) do
     filter = cast_to_struct(filter)
-    sub_id = generate_random_id() |>  String.to_atom()
+    sub_id = generate_random_id() |> String.to_atom()
     {filter, sub_id}
   end
 

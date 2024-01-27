@@ -36,7 +36,7 @@ defmodule NostrBasics.MixProject do
   defp docs do
     [
       main: "Nostrlib",
-      extras: [ "README.md" ],
+      extras: ["README.md"],
       assets: "/guides/assets",
       source_ref: @version,
       source_url: @repo_url

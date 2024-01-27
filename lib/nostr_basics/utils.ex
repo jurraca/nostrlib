@@ -24,7 +24,7 @@ defmodule NostrBasics.Utils do
       {:error, %Jason.EncodeError{message: message}} ->
         {:error, "error encoding JSON: #{message}"}
 
-        {:error, msg} ->
+      {:error, msg} ->
         {:error, "unknown JSON encode error"}
     end
   end
@@ -69,12 +69,17 @@ defmodule NostrBasics.Utils do
       %URI{
         scheme: "ws",
         host: host
-      } -> if(host, do: true, else: false)
+      } ->
+        if(host, do: true, else: false)
+
       %URI{
         scheme: "wss",
         host: host
-      } -> if(host, do: true, else: false)
-      _ -> false
+      } ->
+        if(host, do: true, else: false)
+
+      _ ->
+        false
     end
   end
 
