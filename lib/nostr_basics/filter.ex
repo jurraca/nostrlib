@@ -2,7 +2,7 @@ defmodule NostrBasics.Filter do
   @moduledoc """
   Details of a client subscription request to a relay
   """
-
+  @derive Jason.Encoder
   defstruct [
     :subscription_id,
     :since,
@@ -57,20 +57,6 @@ defmodule NostrBasics.Filter do
     |> Map.merge(atom_map)
     |> Map.put(:subscription_id, subscription_id)
     |> Map.put(:authors, decode_authors(encoded_request))
-  end
-
-  @doc """
-  Converts a structured Filter into a NIP-01 JSON REQ string
-  """
-  @spec to_query(Filter.t()) :: {:ok, String.t()} | {:error, String.t()}
-  def to_query(filter) do
-    since_timestamp = if(filter.since, do: DateTime.to_unix(filter.since))
-    hex_authors = encode_authors(filter.authors)
-
-    filter
-    |> Map.put(:timestamp, since_timestamp)
-    |> Map.put(:authors, hex_authors)
-    |> Jason.encode()
   end
 
   defp decode_authors(%{"authors" => nil}), do: []

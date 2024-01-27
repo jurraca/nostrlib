@@ -3,7 +3,7 @@ defmodule NostrBasics.Message do
   Parse messages between clients and relays.
   """
 
-  alias NostrBasics.Utils
+  alias NostrBasics.{CloseRequest, Event, Filter, Utils}
 
   @doc """
   Converts a client message in string format to the internal struct
@@ -14,9 +14,10 @@ defmodule NostrBasics.Message do
           | {:close, CloseRequest.t()}
           | {:unknown, String.t()}
   def parse(message) do
-    message
-    |> Utils.json_decode()
-    |> decode()
+    case Utils.json_decode(message) do
+      {:ok, message} -> decode(message)
+      {:error, msg} -> {:error, msg}
+    end
   end
 
   ### Clients to relays
@@ -26,9 +27,7 @@ defmodule NostrBasics.Message do
           | {:req, list(Filter.t())}
           | {:close, CloseRequest.t()}
           | {:unknown, String.t()}
-  def decode(["EVENT", encoded_event]) do
-    {:event, Event.decode(encoded_event)}
-  end
+  def decode(["EVENT", event]), do: Event.decode(event)
 
   def decode(["REQ" | [subscription_id | requests]]) do
     {:req, Enum.map(requests, &Filter.decode(&1, subscription_id))}
@@ -67,7 +66,16 @@ defmodule NostrBasics.Message do
 
   def decode(["OK", event_id, false, message]) do
     [reason, msg ] = String.split(message, ":")
-    {:error, "Message not accepted by relay with reason: #{reason} for event #{event_id} with message #{message}"}
+    {:error, event_id, "Message not accepted by relay with reason: #{reason} for event #{event_id} with message #{msg}"}
+  end
+
+  def decode(["CLOSED", subscription_id, nil]) do
+    {:closed, subscription_id}
+  end
+
+  def decode(["CLOSED", subscription_id, message]) do
+    [reason, msg ] = String.split(message, ":")
+    {:error, "Subscription closed by relay with reason: #{reason} for event #{subscription_id} with message #{msg}"}
   end
 
   def decode(_unknown_message) do

@@ -2,11 +2,11 @@ defmodule NostrBasics.Profile do
   @moduledoc """
   Represents a user's profile
   """
-
+  @derive Jason.Encoder
   defstruct [:about, :banner, :display_name, :lud16, :name, :nip05, :picture, :website]
 
   @type t :: %__MODULE__{}
-  @reaction_kind 0
+  @kind 0
 
   alias NostrBasics.Event
   alias __MODULE__
@@ -20,7 +20,7 @@ defmodule NostrBasics.Profile do
       {:ok, json_profile} ->
         {
           :ok,
-          Event.create(@reaction_kind, json_profile, pubkey)
+          Event.create(@kind, json_profile, pubkey)
         }
 
       {:error, message} ->

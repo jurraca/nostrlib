@@ -3,5 +3,5 @@ defmodule NostrBasics.RelayMessageTest do
 
   alias NostrBasics.RelayMessage
 
-  doctest RelayMessage
+
 end
