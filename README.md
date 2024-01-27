@@ -1,45 +1,15 @@
-# NostrBasics
+# Nostrlib
 
-Basic structures both useful for nostr relays and clients
-
-Takes care of:
-
-- Keys
-  - Private keys
-  - Public keys
-
-- Client nostr messages
-  - Event
-  - Req
-  - Close
-
-- Relay nostr messages
-  - Event
-  - Notice
-  - EOSE
-
-- Cryptography
-  - SHA256
-  - Schnorr Signatures
-
-- Events
-  - Parsing
-  - Serialization
-  - Signing
-  - Validation
-
-- Filters
-  - Parsing
-  - Serialization
+Nostr library for Elixir.
 
 ## Installation
 
-The package can be installed by adding `nostr_basics` to your list of dependencies in `mix.exs`:
+If available in [Hex](https://hex.pm), the package can be installed by adding `nostrlib` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:nostr_basics, "~> 0.1.6"}
+    {:nostrlib, "~> 0.1.0"}
   ]
 end
 ```
