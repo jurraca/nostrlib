@@ -2,7 +2,7 @@ defmodule NostrBasics.ContactList do
   @moduledoc """
   Represents a nostr user's contact list and relays.
   """
-
+  @derive Jason.Encoder
   defstruct [:pubkey, :contacts, :relays]
 
   alias __MODULE__
@@ -22,15 +22,11 @@ defmodule NostrBasics.ContactList do
   @doc """
   Converts an %ContactList{} into an %Event{}
   """
-  def to_event(%ContactList{pubkey: pubkey, contacts: contacts, relays: relays}) do
+  def get_content_and_tags(%ContactList{contacts: contacts, relays: relays}) do
     content = content_from_relays(relays)
     tags = tags_from_contacts(contacts)
 
-    %{
-      Event.create(@contact_kind, content, pubkey)
-      | tags: tags,
-        created_at: DateTime.utc_now()
-    }
+    {:ok, content, tags}
   end
 
   defp tags_from_contacts(contacts) do

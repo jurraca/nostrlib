@@ -6,17 +6,24 @@ defmodule NostrBasics.Keys.PrivateKey do
   @type id :: String.t() | <<_::256>>
 
   alias NostrBasics.Utils
-  alias NostrBasics.Keys.PrivateKey
   alias Bitcoinex.Secp256k1.PrivateKey
 
   @doc """
   Creates a new private key
   """
-  @spec create() :: %PrivateKey{d: integer()}
+  @spec create() :: String.t()
   def create do
-    :crypto.strong_rand_bytes(32)
-    |> :binary.decode_unsigned()
-    |> PrivateKey.new()
+    :crypto.strong_rand_bytes(32) |> to_nsec()
+  end
+
+  @doc """
+  Encodes a private key into the nsec format
+  """
+  @spec to_nsec(<<_::256>>) :: binary()
+  def to_nsec(<<_::256>> = private_key), do: {:ok, Utils.to_bech32(private_key, "nsec")}
+
+  def to_nsec(bin) when is_binary(bin) do
+    {:error, "#{bin} should be a 256 bits private key"}
   end
 
   @doc """
@@ -25,9 +32,9 @@ defmodule NostrBasics.Keys.PrivateKey do
   @spec from_nsec(binary()) :: {:ok, <<_::256>>} | {:error, String.t()}
   def from_nsec("nsec" <> _ = bech32_private_key) do
     case Bech32.decode(bech32_private_key) do
-      {:ok, "nsec", private_key} ->
-        if bit_size(private_key) == 256 do
-          {:ok, private_key}
+      {:ok, "nsec", privkey_bin} ->
+        if bit_size(privkey_bin) == 256 do
+          from_binary(privkey_bin)
         else
           {:error, "private key is shorter than 256 bits"}
         end
@@ -40,8 +47,8 @@ defmodule NostrBasics.Keys.PrivateKey do
     end
   end
 
-  def from_nsec(badly_formatted_address) do
-    {:error, "#{badly_formatted_address} is not an nsec formatted address"}
+  def from_nsec(not_an_nsec) do
+    {:error, "#{not_an_nsec} is not an nsec formatted address"}
   end
 
   @doc """
@@ -55,22 +62,19 @@ defmodule NostrBasics.Keys.PrivateKey do
     end
   end
 
-  @doc """
-  Encodes a private key into the nsec format
-  """
-  @spec to_nsec(<<_::256>>) :: binary()
-  def to_nsec(<<_::256>> = private_key), do: Utils.to_bech32(private_key, "nsec")
-
-  def to_nsec(not_a_256_bits_private_key) do
-    {:error, "#{not_a_256_bits_private_key} should be a 256 bits private key"}
+  def from_binary(bin) do
+    bin
+    |> :binary.decode_unsigned()
+    |> PrivateKey.new()
   end
 
   @doc """
   Does its best to convert any private key format to binary, issues an error if it can't
   """
   @spec to_binary(PrivateKey.id()) :: {:ok, <<_::256>>} | {:error, String.t()}
+  def to_binary(%PrivateKey{d: d}), do: :binary.encode_unsigned(d)
+  def to_binary("nsec" <> _ = nsec), do: Utils.from_bech32(nsec)
   def to_binary(<<_::256>> = private_key), do: {:ok, private_key}
-  def to_binary("nsec" <> _ = private_key), do: from_nsec(private_key)
 
   def to_binary(not_lowercase_nsec) do
     case String.downcase(not_lowercase_nsec) do

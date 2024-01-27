@@ -6,29 +6,24 @@ defmodule NostrBasics.Keys.PublicKey do
   @type id :: String.t() | <<_::256>>
 
   alias NostrBasics.Utils
-  alias NostrBasics.Keys.PrivateKey
-  alias Bitcoinex.Secp256k1
+  alias Bitcoinex.Secp256k1.{PrivateKey, Point}
 
   @doc """
   Issues the public key corresponding to a given private key
   """
-  @spec from_private_key(<<_::256>>) ::
-          {:ok, <<_::256>>} | {:error, String.t() | :signing_key_decoding_failed}
-  def from_private_key(private_key) do
-    case PrivateKey.to_binary(private_key) do
-      {:ok, binary_private_key} ->
-        pubkey =
-          binary_private_key
-          |> String.to_integer()
-          |> Secp256k1.PrivateKey.new()
-          |> Secp256k1.PrivateKey.to_point()
-          |> Secp256k1.Point.serialize_public_key()
+  @spec from_private_key(PrivateKey.t()) :: {:ok, String.t()} | {:error, String.t()}
+  def from_private_key(%PrivateKey{} = private_key) do
+    <<_b::size(8), pubkey::binary>> = private_key
+      |> PrivateKey.to_point()
+      |> Point.sec()
 
-        {:ok, pubkey}
+      {:ok, pubkey}
+  end
 
-      {:error, message} ->
-        {:error, message}
-    end
+  @spec from_private_key(<<_::256>>) :: {:ok, <<_::256>>}
+  def from_private_key(bin) do
+    {:ok, privkey} = bin |> :binary.decode_unsigned() |> PrivateKey.new()
+    from_private_key(privkey)
   end
 
   @doc """
@@ -43,34 +38,15 @@ defmodule NostrBasics.Keys.PublicKey do
     end
   end
 
-  @doc """
-  Converts a public key in the npub format into a binary public key that can be used with this lib
-  """
-  @spec from_npub(binary()) :: {:ok, binary()} | {:error, String.t()}
-  def from_npub("npub" <> _ = bech32_pubkey) do
-    case Bech32.decode(bech32_pubkey) do
-      {:ok, "npub", pubkey} -> {:ok, pubkey}
-      {:ok, _, _} -> {:error, "malformed bech32 public key"}
-      {:error, message} -> {:error, message}
-    end
-  end
-
-  @doc """
-  Converts a public key in the npub format into a binary public key that can be used with this lib
-  """
-  @spec from_npub!(binary()) :: <<_::256>>
-  def from_npub!("npub" <> _ = bech32_pubkey) do
-    case from_npub(bech32_pubkey) do
-      {:ok, pubkey} -> pubkey
-      {:error, message} -> raise message
-    end
-  end
+  def from_npub("npub" <> _data = npub), do: Utils.from_bech32(npub)
+  def from_npub(not_an_npub), do: {:error, "Not an npub, got #{not_an_npub}"}
 
   @doc """
   Encodes a public key into the npub format
   """
-  @spec to_npub(<<_::256>>) :: binary()
-  def to_npub(<<_::256>> = public_key), do: Utils.to_bech32(public_key, "npub")
+  @spec to_npub(<<_::256>>) :: String.t()
+  def to_npub(<<3::size(8), pubkey::binary>>), do: Utils.to_bech32(pubkey, "npub")
+  def to_npub(<<_::256>> = pubkey), do: Utils.to_bech32(pubkey, "npub")
 
   @doc """
   Does its best to convert any public key format to binary, issues an error if it can't
@@ -78,7 +54,13 @@ defmodule NostrBasics.Keys.PublicKey do
   @spec to_binary(<<_::256>> | String.t() | list(<<_::256>>)) ::
           {:ok, <<_::256>>} | {:error, String.t()}
   def to_binary(<<_::256>> = public_key), do: {:ok, public_key}
-  def to_binary("npub" <> _ = public_key), do: from_npub(public_key)
+  def to_binary("npub" <> _ = public_key) do
+    case Bech32.decode(public_key) do
+      {:ok, "npub", pubkey} -> {:ok, pubkey}
+      {:ok, _, _} -> {:error, "malformed bech32 public key"}
+      {:error, message} -> {:error, message}
+    end
+  end
 
   def to_binary(public_keys) when is_list(public_keys) do
     public_keys

@@ -4,7 +4,7 @@ defmodule NostrBasics.Reaction do
 
   Likes are fiat.
   """
-
+  @derive Jason.Encoder
   defstruct [:event_id, :event_pubkey, :content]
 
   alias __MODULE__

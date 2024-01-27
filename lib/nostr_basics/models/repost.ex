@@ -2,7 +2,7 @@ defmodule NostrBasics.Repost do
   @moduledoc """
   Repost event struct and manipulation functions
   """
-
+  @derive Jason.Encoder
   defstruct [:event, :relays]
 
   alias __MODULE__

@@ -2,7 +2,7 @@ defmodule NostrBasics.Delete do
   @moduledoc """
   Delete event struct and manipulation functions
   """
-
+  @derive Jason.Encoder
   defstruct [:note, event_ids: []]
 
   alias __MODULE__
