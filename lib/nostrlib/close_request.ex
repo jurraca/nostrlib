@@ -1,6 +1,6 @@
 defmodule Nostrlib.CloseRequest do
   @moduledoc """
-  When a subscription's got to be closed... meant to be sent to a relay from a client.
+  A CLOSED request sent from a relay to a client.
   """
 
   defstruct [:subscription_id]

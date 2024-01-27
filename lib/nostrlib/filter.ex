@@ -1,6 +1,6 @@
 defmodule Nostrlib.Filter do
   @moduledoc """
-  Details of a client subscription request to a relay
+  A Filter represents the data requested in a subscription. These will be encoded into REQ messages (see `Request` module).
   """
   @derive Jason.Encoder
   defstruct [

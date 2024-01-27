@@ -1,6 +1,6 @@
 defmodule Nostrlib.Event do
   @moduledoc """
-  Represents the basic structure of anything that's being sent to/from relays
+  Create and decode events.
   """
 
   require Logger

@@ -1,6 +1,6 @@
 defmodule Nostrlib.Keys.PrivateKey do
   @moduledoc """
-  Private keys management functions
+  Private keys management functions. We use Bitcoinex's Secp functions.
   """
 
   @type id :: String.t() | <<_::256>>

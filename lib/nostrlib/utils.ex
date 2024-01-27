@@ -1,4 +1,8 @@
 defmodule Nostrlib.Utils do
+  @moduledoc """
+  Utility functions: hex encoding/decoding, json encoding/decoding, bech32...
+  """
+
   def to_hex(bin), do: Base.encode16(bin, case: :lower)
 
   def from_hex(bin), do: Base.decode16!(bin, case: :lower)
