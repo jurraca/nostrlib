@@ -1,6 +1,11 @@
 defmodule Nostrlib.Event do
   @moduledoc """
   Create and decode events.
+
+  Main API:
+  `create/2` takes a model struct and a hex pubkey.
+  `sign_event/2` and `sign_and_serialize/2` both take an Event and Privkey structs.
+  `Privkey` is Bitcoinex's `PrivateKey` struct holding an integer.
   """
 
   require Logger
@@ -36,23 +41,22 @@ defmodule Nostrlib.Event do
     |> add_id()
   end
 
-  def create(%Note{content: content}, privkey) do
-    create(@note_kind, content, privkey)
+  def create(%Note{content: content}, hex_pubkey) do
+    create(@note_kind, content, hex_pubkey)
   end
 
-  def create(%Profile{} = profile, privkey) do
-    create(@profile_kind, profile, privkey)
+  def create(%Profile{} = profile, hex_pubkey) do
+    create(@profile_kind, profile, hex_pubkey)
   end
 
-  def create(%ContactList{} = contact_list, privkey) do
+  def create(%ContactList{} = contact_list, hex_pubkey) do
     {:ok, content, tags} = ContactList.get_content_and_tags(contact_list)
-    create(@contact_kind, contact_list, privkey, tags: tags)
+    create(@contact_kind, contact_list, hex_pubkey, tags: tags)
   end
 
   def sign_event(%__MODULE__{id: id} = event, %PrivKey{} = privkey) do
     aux_bytes = :crypto.strong_rand_bytes(32) |> :binary.decode_unsigned()
     id_bin = id |> Utils.from_hex() |> :binary.decode_unsigned()
-    # {:ok, private_key}  = PrivateKey.from_binary(privkey)
     case Schnorr.sign(privkey, id_bin, aux_bytes) do
       {:ok, sig} ->
         serialized_sig = serialize_sig!(sig)
@@ -128,7 +132,7 @@ defmodule Nostrlib.Event do
       atom_map = Enum.map(event, fn {k, v} -> {String.to_atom(k), v} end)
       {:event, Map.merge(%__MODULE__{}, atom_map)}
     else
-      Logger.warn("Could not validate event #{event.id}.")
+      Logger.warning("Could not validate event #{event.id}.")
       {:error, :invalid_event}
     end
   end

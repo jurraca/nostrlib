@@ -13,7 +13,7 @@ defmodule Nostrlib.Keys.PrivateKey do
   """
   @spec create() :: String.t()
   def create do
-    :crypto.strong_rand_bytes(32) |> to_nsec()
+    :crypto.strong_rand_bytes(32)
   end
 
   @doc """

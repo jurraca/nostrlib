@@ -6,7 +6,7 @@ defmodule Nostrlib.Note do
   @derive Jason.Encoder
   defstruct [:content]
 
-  alias Nostrlib.Event
+  alias Nostrlib.{Event, Utils}
   alias Nostrlib.Keys.PublicKey
 
   @type t :: %__MODULE__{}
@@ -14,9 +14,10 @@ defmodule Nostrlib.Note do
   @doc """
   Creates a new nostr note
   """
-  @spec create(String.t(), PrivateKey.id()) :: {:ok, Event.t()} | {:error, String.t()}
-  def create(content, privkey) when is_binary(content) do
-    %__MODULE__{content: content} |> Event.create(privkey)
+  @spec create(String.t(), PublicKey.t()) :: {:ok, Event.t()} | {:error, String.t()}
+  def create(content, pubkey) when is_binary(content) do
+    hex_pubkey = Utils.to_hex(pubkey)
+    %__MODULE__{content: content} |> Event.create(hex_pubkey)
   end
 
   @spec create(String.t(), PrivateKey.id()) :: {:ok, String.t()} | {:error, String.t()}

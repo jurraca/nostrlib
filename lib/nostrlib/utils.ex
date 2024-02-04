@@ -3,9 +3,9 @@ defmodule Nostrlib.Utils do
   Utility functions: hex encoding/decoding, json encoding/decoding, bech32...
   """
 
-  def to_hex(bin), do: Base.encode16(bin, case: :lower)
+  def to_hex(bin) when is_binary(bin), do: Base.encode16(bin, case: :lower)
 
-  def from_hex(bin), do: Base.decode16!(bin, case: :lower)
+  def from_hex(bin) when is_binary(bin), do: Base.decode16!(bin, case: :lower)
 
   def json_decode(str) do
     case Jason.decode(str) do
