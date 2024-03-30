@@ -28,7 +28,7 @@ defmodule Nostrlib.Utils do
       {:error, %Jason.EncodeError{message: message}} ->
         {:error, "error encoding JSON: #{message}"}
 
-      {:error, msg} ->
+      {:error, _msg} ->
         {:error, "unknown JSON encode error"}
     end
   end
@@ -92,5 +92,11 @@ defmodule Nostrlib.Utils do
       {:ok, _} -> true
       err -> err
     end
+  end
+
+  def map_string_to_atoms(map) when is_map(map) do
+    map
+    |> Enum.map(fn {k, v} -> {String.to_atom(k), v} end)
+    |> Enum.into(%{})
   end
 end

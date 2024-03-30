@@ -7,7 +7,7 @@ defmodule Nostrlib.Note do
   defstruct [:content]
 
   alias Nostrlib.{Event, Utils}
-  alias Nostrlib.Keys.PublicKey
+  alias Nostrlib.Keys.{PublicKey, PrivateKey}
 
   @type t :: %__MODULE__{}
 
@@ -20,8 +20,14 @@ defmodule Nostrlib.Note do
     %__MODULE__{content: content} |> Event.create(hex_pubkey)
   end
 
-  @spec create(String.t(), PrivateKey.id()) :: {:ok, String.t()} | {:error, String.t()}
+  def create_serialized(content, privkey) when is_binary(privkey) do
+    {:ok, pk} = PrivateKey.from_binary(privkey)
+    create_serialized(content, pk)
+  end
+
+  @spec create(String.t(), map()) :: {:ok, String.t()} | {:error, String.t()}
   def create_serialized(content, privkey) do
-    create(content, privkey) |> Event.sign_and_serialize(privkey)
+    {:ok, pubkey} = PublicKey.from_private_key(privkey)
+    create(content, pubkey) |> Event.sign_and_serialize(privkey)
   end
 end

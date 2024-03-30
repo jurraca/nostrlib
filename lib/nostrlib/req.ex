@@ -16,7 +16,6 @@ defmodule Nostrlib.Request do
   @text_kind 1
   @recommended_servers_kind 2
   @contacts_kind 3
-  @encrypted_direct_message_kind 4
   @deletion_kind 5
   @repost_kind 6
   @reaction_kind 7

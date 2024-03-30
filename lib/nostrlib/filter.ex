@@ -16,6 +16,7 @@ defmodule Nostrlib.Filter do
   ]
 
   alias __MODULE__
+  alias Nostrlib.Utils
 
   @type t :: %__MODULE__{}
 
@@ -50,13 +51,13 @@ defmodule Nostrlib.Filter do
   @doc """
   Converts a JSON decoded encoded filter into a %Filter{}
   """
-  def decode(encoded_request, subscription_id) do
-    atom_map = Enum.map(encoded_request, fn {k, v} -> {String.to_atom(k), v} end)
+  def decode(decoded_request, subscription_id) do
+    atom_map = Utils.map_string_to_atoms(decoded_request)
 
     %Filter{}
     |> Map.merge(atom_map)
     |> Map.put(:subscription_id, subscription_id)
-    |> Map.put(:authors, decode_authors(encoded_request))
+    |> Map.put(:authors, decode_authors(decoded_request))
   end
 
   defp decode_authors(%{"authors" => nil}), do: []

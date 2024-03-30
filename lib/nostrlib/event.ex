@@ -14,7 +14,6 @@ defmodule Nostrlib.Event do
   defstruct [:id, :pubkey, :created_at, :kind, :tags, :content, :sig]
 
   alias Nostrlib.Utils
-  alias Nostrlib.Keys.{PrivateKey, PublicKey}
   alias Nostrlib.{ContactList, Note, Profile}
   alias Bitcoinex.Secp256k1.{Point, Schnorr, Signature}
   alias Bitcoinex.Secp256k1.PrivateKey, as: PrivKey
@@ -22,9 +21,9 @@ defmodule Nostrlib.Event do
   @profile_kind 0
   @note_kind 1
   @contact_kind 3
-  @delete_kind 5
-  @repost_kind 6
-  @reaction_kind 7
+  #@delete_kind 5
+  #@repost_kind 6
+  #@reaction_kind 7
 
   @doc """
   Create an event.
@@ -51,9 +50,12 @@ defmodule Nostrlib.Event do
 
   def create(%ContactList{} = contact_list, hex_pubkey) do
     {:ok, content, tags} = ContactList.get_content_and_tags(contact_list)
-    create(@contact_kind, contact_list, hex_pubkey, tags: tags)
+    create(@contact_kind, content, hex_pubkey, tags: tags)
   end
 
+  @doc """
+  Sign an event. It must already have an id to be signed.
+  """
   def sign_event(%__MODULE__{id: id} = event, %PrivKey{} = privkey) do
     aux_bytes = :crypto.strong_rand_bytes(32) |> :binary.decode_unsigned()
     id_bin = id |> Utils.from_hex() |> :binary.decode_unsigned()
@@ -99,12 +101,13 @@ defmodule Nostrlib.Event do
   end
 
   @doc """
-  Adds an ID to an event that doesn't have one
+  Adds an ID to an event that doesn't have one.
+  If it doesn't have a created_at ts, add it first.
   """
   @spec add_id(%__MODULE__{}) :: %__MODULE__{}
   def add_id(%__MODULE__{created_at: nil} = event) do
-    event_with_ts = %{event | created_at: DateTime.utc_now() |> DateTime.to_unix()}
-    add_id(event_with_ts)
+    unix_ts_now = DateTime.utc_now() |> DateTime.to_unix()
+    %{event | created_at: unix_ts_now} |> add_id()
   end
 
   def add_id(%__MODULE__{created_at: _} = event_with_ts) do
@@ -128,9 +131,10 @@ defmodule Nostrlib.Event do
   """
   @spec decode(Map.t()) :: {:ok, %__MODULE__{}} | {:error, String.t()}
   def decode(event) when is_map(event) do
-    if validate_event(event) do
-      atom_map = Enum.map(event, fn {k, v} -> {String.to_atom(k), v} end)
-      {:event, Map.merge(%__MODULE__{}, atom_map)}
+    atom_map = Utils.map_string_to_atoms(event)
+    event_parsed = Map.merge(%__MODULE__{}, atom_map)
+    if validate_event(event_parsed) do
+      {:event, event_parsed}
     else
       Logger.warning("Could not validate event #{event.id}.")
       {:error, :invalid_event}
@@ -139,7 +143,7 @@ defmodule Nostrlib.Event do
 
   @spec decode!(String.t()) :: %__MODULE__{}
   def decode!(string_event) do
-    m = Utils.decode_json(string_event)
+    {:ok, m} = Utils.json_decode(string_event)
 
     case decode(m) do
       {:ok, event} -> event
@@ -147,18 +151,7 @@ defmodule Nostrlib.Event do
     end
   end
 
-  @doc """
-  Encodes an event key into the nevent format
-  """
-  @spec to_nevent(%__MODULE__{}) :: binary()
-  def to_nevent(%__MODULE__{id: nil} = event) do
-    id = encode_id(event)
-    Bech32.encode("nevent", id)
-  end
-
-  def to_nevent(%__MODULE__{id: id}), do: Bech32.encode("nevent", id)
-
-  @spec serialize_sig!(%Signature{}) :: binary()
+  @spec serialize_sig!(Signature.t{}) :: binary()
   def serialize_sig!(sig) do
     sig
     |> Signature.serialize_signature()
@@ -183,7 +176,7 @@ defmodule Nostrlib.Event do
     end
   end
 
-  @moduledoc """
+  @doc """
   Check that an event's signature is valid for the event.
   """
   @spec validate_signature(%__MODULE__{}) :: :ok | {:error, atom()}
@@ -200,4 +193,15 @@ defmodule Nostrlib.Event do
       end
     end
   end
+
+  @doc """
+  Encodes an event key into the nevent format
+  """
+  @spec to_nevent(%__MODULE__{}) :: binary()
+  def to_nevent(%__MODULE__{id: nil} = event) do
+    id = encode_id(event)
+    Bech32.encode("nevent", id)
+  end
+
+  def to_nevent(%__MODULE__{id: id}), do: Bech32.encode("nevent", id)
 end

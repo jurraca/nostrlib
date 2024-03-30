@@ -4,6 +4,7 @@ defmodule Nostrlib.Keys.PrivateKey do
   """
 
   @type id :: String.t() | <<_::256>>
+  @type t :: %Bitcoinex.Secp256k1.PrivateKey{}
 
   alias Nostrlib.Utils
   alias Bitcoinex.Secp256k1.PrivateKey
@@ -13,7 +14,7 @@ defmodule Nostrlib.Keys.PrivateKey do
   """
   @spec create() :: String.t()
   def create do
-    :crypto.strong_rand_bytes(32)
+    :crypto.strong_rand_bytes(32) |> from_binary()
   end
 
   @doc """
@@ -25,6 +26,8 @@ defmodule Nostrlib.Keys.PrivateKey do
   def to_nsec(bin) when is_binary(bin) do
     {:error, "#{bin} should be a 256 bits private key"}
   end
+
+  def to_nsec(%PrivateKey{} = privkey), do: privkey |> to_binary |> to_nsec
 
   @doc """
   Extracts a binary private key from the nsec format
