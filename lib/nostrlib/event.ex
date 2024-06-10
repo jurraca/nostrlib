@@ -35,9 +35,7 @@ defmodule Nostrlib.Event do
   end
 
   def create(%{kind: _, pubkey: _, content: _} = event_map) do
-    %__MODULE__{}
-    |> Map.merge(event_map)
-    |> add_id()
+    struct!(__MODULE__, event_map) |> add_id()
   end
 
   def create(%Note{content: content}, hex_pubkey) do
@@ -64,7 +62,7 @@ defmodule Nostrlib.Event do
         serialized_sig = serialize_sig!(sig)
         {:ok, %{event | sig: serialized_sig}}
 
-      {:error, message} when is_atom(message) ->
+      {:error, message} ->
         {:error, Atom.to_string(message)}
     end
   end
@@ -131,23 +129,19 @@ defmodule Nostrlib.Event do
   """
   @spec decode(Map.t()) :: {:ok, %__MODULE__{}} | {:error, String.t()}
   def decode(event) when is_map(event) do
-    atom_map = Utils.map_string_to_atoms(event)
-    event_parsed = Map.merge(%__MODULE__{}, atom_map)
-    if validate_event(event_parsed) do
-      {:event, event_parsed}
+    if validate_event(event) do
+      {:ok, event}
     else
       Logger.warning("Could not validate event #{event.id}.")
       {:error, :invalid_event}
     end
   end
 
-  @spec decode!(String.t()) :: %__MODULE__{}
-  def decode!(string_event) do
-    {:ok, m} = Utils.json_decode(string_event)
-
-    case decode(m) do
-      {:ok, event} -> event
-      {:error, message} -> raise message
+  @spec decode(String.t()) :: {:ok, %__MODULE__{}} | {:error, String.t()}
+  def decode(string_event) do
+    case Utils.json_decode(string_event, keys: :atoms) do
+        {:ok, ["EVENT", event_map]} -> create(event_map)
+        {:error, msg} -> {:error, msg}
     end
   end
 
@@ -158,20 +152,20 @@ defmodule Nostrlib.Event do
     |> Base.encode16(case: :lower)
   end
 
-  @spec validate_event(%__MODULE__{}) :: :ok | {:error, String.t()}
+  @spec validate_event(%__MODULE__{}) :: boolean()
   def validate_event(%__MODULE__{} = event) do
-    with true <- validate_id(event),
+    with {:ok, _} <- validate_id(event),
          true <- validate_signature(event) do
       true
     else
-      {:error, message} -> {:error, message}
+      {:error, _} -> false
     end
   end
 
-  @spec validate_id(%__MODULE__{}) :: :ok | {:error, String.t()}
+  @spec validate_id(%__MODULE__{}) :: {:ok, String.t()} | {:error, String.t()}
   def validate_id(%__MODULE__{id: id} = event) do
     case id == encode_id(event) do
-      true -> true
+      true -> {:ok, id}
       false -> {:error, "generated ID and the one in the event don't match"}
     end
   end
@@ -179,11 +173,10 @@ defmodule Nostrlib.Event do
   @doc """
   Check that an event's signature is valid for the event.
   """
-  @spec validate_signature(%__MODULE__{}) :: :ok | {:error, atom()}
+  @spec validate_signature(%__MODULE__{}) :: boolean() | {:error, atom()}
   def validate_signature(%__MODULE__{id: id, sig: sig, pubkey: pubkey}) do
     with id_int <- id |> Utils.from_hex() |> :binary.decode_unsigned(),
          {:ok, parsed_sig} <- Signature.parse_signature(sig) do
-      # Utils.from_hex(pubkey)
       case Point.lift_x(pubkey) do
         {:ok, lifted_pubkey} ->
           Schnorr.verify_signature(lifted_pubkey, id_int, parsed_sig)
