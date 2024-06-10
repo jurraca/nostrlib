@@ -8,29 +8,18 @@ defmodule Nostrlib.Message do
   @doc """
   Converts a client message in string format to the internal struct
   """
-  @spec parse(String.t()) ::
-          {:event, Event.t()}
-          | {:req, list(Filter.t())}
-          | {:close, CloseRequest.t()}
-          | {:unknown, String.t()}
   def parse(message) do
-    case Utils.json_decode(message) do
+    case Utils.json_decode(message, keys: :atoms) do
       {:ok, message} -> decode(message)
       {:error, msg} -> {:error, msg}
     end
   end
 
   ### Clients to relays
-
-  @spec decode(list()) ::
-          {:event, Event.t()}
-          | {:req, list(Filter.t())}
-          | {:close, CloseRequest.t()}
-          | {:unknown, String.t()}
   def decode(["EVENT", event]), do: Event.decode(event)
 
   def decode(["REQ" | [subscription_id | requests]]) do
-    {:req, Enum.map(requests, &Filter.decode(&1, subscription_id))}
+    {:req, Enum.map(requests, &Filter.decode(&1))}
   end
 
   def decode(["CLOSE", subscription_id]) do
@@ -38,18 +27,8 @@ defmodule Nostrlib.Message do
   end
 
   ### Relays to Clients
-
-  @spec decode(list()) ::
-          {:event, String.t(), Event.t()}
-          | {:notice, String.t()}
-          | {:end_of_stored_events, String.t()}
-          | {:ok, String.t(), boolean(), String.t()}
-          | {:unknown, String.t()}
-  def decode(["EVENT", subscription_id, encoded_event]) do
-    case Event.decode(encoded_event) do
-      {:ok, event} -> {:event, subscription_id, event}
-      {:error, reason} -> {:error, reason}
-    end
+  def decode(["EVENT", subscription_id, event]) do
+    {:event, subscription_id, event}
   end
 
   def decode(["NOTICE", message]) when is_binary(message) do

@@ -1,74 +1,164 @@
 defmodule Nostrlib.Filter do
   @moduledoc """
-  A Filter represents the data requested in a subscription. These will be encoded into REQ messages (see `Request` module).
+  Creates Nostr REQ events, i.e. subscription filters.
+  The main builder is the `Filter.new/1` function
   """
-  @derive Jason.Encoder
-  defstruct [
-    :subscription_id,
-    :since,
-    :until,
-    :limit,
-    ids: [],
-    authors: [],
-    kinds: [],
-    e: [],
-    p: []
-  ]
 
-  alias __MODULE__
   alias Nostrlib.Utils
 
-  @type t :: %__MODULE__{}
+  @valid_keys [:since, :until, :limit, :ids, :authors, :kinds, :e, :p]
+  
+  @default_id_size 16
+  # hours back for messages
+  @default_since 36
+  @metadata_kind 0
+  @text_kind 1
+  @recommended_servers_kind 2
+  @contacts_kind 3
+  @deletion_kind 5
+  @repost_kind 6
+  @reaction_kind 7
 
   @doc """
-  Converts a NIP-01 JSON REQ string into a structured Filter
+  Create a new filter from a Map, Keyword list, or by key and value (for single field filters).
   """
-  @spec from_req(String.t(), String.t()) :: {:ok, Filter.t()} | {:error, String.t()}
-  def from_req(req, subscription_id) do
-    case Jason.decode(req) do
-      {:ok, encoded_request} ->
-        {
-          :ok,
-          decode(encoded_request, subscription_id)
-        }
-
-      {:error, %Jason.DecodeError{position: position, token: token}} ->
-        {:error, "error decoding JSON at position #{position}: #{token}"}
+  def new(params) do
+    case validate(params) do
+      {:ok, filter} -> {:ok, filter}
+      {:error, reason} -> {:error, reason}
     end
   end
 
+  def new(key, value) do
+     [{key, value}] |> validate()
+  end
+
   @doc """
-  Converts a NIP-01 JSON REQ string into a structured Filter
+  Compose a list of filters together into a single filter.
   """
-  @spec from_req!(String.t(), String.t()) :: Filter.t()
-  def from_req!(req, subscription_id) do
-    case from_req(req, subscription_id) do
-      {:ok, filter} -> filter
-      {:error, message} -> raise message
+  def from_list([final]), do: final
+  def from_list([head, second | tail]) do
+     new = merge(head, second)
+     from_list([new | tail])
+  end
+
+  @doc """
+  Merge two filters, handling conflicts according to the key type.
+  "since", "until", and "opts" are simply overidden by the latest value provided.
+  """
+  def merge(f1, f2) do
+     Map.merge(f1, f2, fn k, v1, v2 -> 
+         cond do
+            k in [:ids, :authors, :kinds] -> v1 ++ v2
+            k in [:since, :until, :opts] -> v2
+            true -> v1 ++ v2 # for e,p tags 
+         end
+     end)
+  end
+
+  def create_sub_id do
+     generate_random_id() |> String.to_atom()
+  end
+  
+  def encode(sub_id, filter) when is_map(filter) do
+    Jason.encode(["REQ", sub_id, filter])
+  end
+
+  def decode(json), do: Utils.json_decode(json, keys: :atoms)
+
+  ### Filter builders ### 
+
+  def profile(pubkey, opts \\ []), do: filter_by_authors([pubkey], [@metadata_kind], opts)
+
+  def recommended_servers(pubkey, opts \\ []), do: filter_by_authors([pubkey], [@recommended_servers_kind], opts)
+
+  def contacts(pubkey, opts \\ []), do: filter_by_authors([pubkey], [@contacts_kind], opts)
+
+  def note_by_id(id, opts \\ []), do: filter_by_ids([id], [@text_kind], opts) 
+
+  def notes_by_id(ids, opts \\ []) when is_list(ids), do: filter_by_ids([ids], [@text_kind], opts)
+
+  def kinds(kinds, opts \\ []) when is_list(kinds), do: filter_by_kind(kinds, opts)
+
+  def notes(pubkeys, opts \\ []) when is_list(pubkeys) do
+    filter_by_authors(pubkeys, [@text_kind], opts)
+  end
+
+  def deletions(pubkeys, opts \\ []) when is_list(pubkeys) do
+    filter_by_authors(pubkeys, [@deletion_kind], opts)
+  end
+
+  def reposts(pubkeys, opts \\ []) when is_list(pubkeys) do
+    filter_by_authors(pubkeys, [@repost_kind], opts)
+  end
+
+  def reactions(pubkeys, opts \\ []) when is_list(pubkeys) do
+    filter_by_authors(pubkeys, [@reaction_kind], opts)
+  end
+
+  def all(opts \\ []) do
+    # got to specify kinds, or else, some relays won't return anything
+    new(%{kinds: [1, 5, 6, 7, 9735], since: opts[:since], opts: opts[:limit]})
+  end
+
+  defp filter_by_kind(kinds, opts) do
+    %{kinds: kinds} |> filter_from_params(opts)
+  end
+
+  defp filter_by_ids(ids, kinds, opts) do
+    %{
+      ids: ids,
+      kinds: kinds 
+    }
+    |> filter_from_params(opts)
+  end
+
+  defp filter_by_authors(pubkeys, kinds, opts) do
+    %{
+      authors: pubkeys,
+      kinds: kinds
+    }
+    |> filter_from_params(opts)
+  end
+
+  defp filter_from_params(params, opts) do
+    params
+    |> put_opts(opts)
+    |> new()
+  end
+
+  defp put_opts(filter, []), do: filter
+  defp put_opts(filter, opts) do
+    Enum.reduce(opts, filter, fn {k, v}, filter ->
+      if k in [:since, :until, :opts] do
+        Map.put(filter, k, v)
+      end
+    end)
+  end
+
+  def validate(params) do
+      filter = Enum.reduce(params, %{}, fn {k, v}, acc -> validate(k, v, acc) end)
+      case :since in Map.keys(filter) do
+          true -> {:ok, filter}
+          false -> 
+              filter = Map.put(filter, :since, @default_since)
+              {:ok, filter}
+      end
+  end
+
+  def validate(key, value, acc) when is_atom(key) do
+    case key in @valid_keys do
+        true -> Map.put(acc, key, value)
+        false -> {:error, "Invalid key for filter, got: #{key}"}
     end
   end
 
-  @doc """
-  Converts a JSON decoded encoded filter into a %Filter{}
-  """
-  def decode(decoded_request, subscription_id) do
-    atom_map = Utils.map_string_to_atoms(decoded_request)
-
-    %Filter{}
-    |> Map.merge(atom_map)
-    |> Map.put(:subscription_id, subscription_id)
-    |> Map.put(:authors, decode_authors(decoded_request))
+  def since_hours(hours) when is_integer(hours) do
+    (DateTime.to_unix(DateTime.utc_now()) - 3600 * hours) |> DateTime.from_unix!
   end
 
-  defp decode_authors(%{"authors" => nil}), do: []
-
-  defp decode_authors(%{"authors" => authors}) do
-    Enum.map(authors, &Base.decode16!(&1, case: :lower))
-  end
-
-  defp encode_authors(%{"authors" => nil}), do: []
-
-  defp encode_authors(%{"authors" => authors}) do
-    Enum.map(authors, &Base.encode16(&1, case: :lower))
+  @spec generate_random_id(integer()) :: binary()
+  defp generate_random_id(size \\ @default_id_size) do
+    :crypto.strong_rand_bytes(size) |> Utils.to_hex()
   end
 end
