@@ -40,6 +40,15 @@ defmodule Nostrlib.FilterTest do
       %{authors: final} = Filter.merge(f1, f2) |> Filter.merge(f3)
       assert f1.authors ++ f3.authors == final
     end
+
+    test "from_list/1", %{filter: filter} do
+      f1 = Map.take(filter, [:authors, :since])
+      f2 = Map.take(filter, [:kinds, :ids])
+      f3 = Map.put(f1, :authors, ["diffpubkey"])
+
+      assert %{authors: f1.authors ++ f3.authors, since: f1.since, kinds: f2.kinds, ids: f2.ids} ==
+               Filter.from_list([f1, f2, f3])
+    end
   end
 
   defp filter(context) do
