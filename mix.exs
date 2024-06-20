@@ -54,11 +54,9 @@ defmodule Nostrlib.MixProject do
   defp deps do
     [
       {:ex_doc, "~> 0.29.1", only: [:docs], runtime: false},
-      {:dialyxir, "~> 1.4", only: [:dev], runtime: false},
-      {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
       {:jason, "~> 1.4"},
       {:bitcoinex, "~> 0.1.7"},
-      {:bech32, "~> 1.0"}
+      {:bech32, "~> 1.0.0"}
     ]
   end
 end

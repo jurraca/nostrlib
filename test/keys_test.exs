@@ -3,10 +3,12 @@ defmodule NostrlibTest.Keys do
 
   alias Bitcoinex.Secp256k1.PrivateKey, as: Secp
   alias Nostrlib.Keys.PrivateKey
+  alias Nostrlib.Keys.PublicKey
 
   setup do
     {:ok, privkey} = PrivateKey.create()
-    {:ok, privkey: privkey}
+    {:ok, pubkey} = PublicKey.from_private_key(privkey)
+    {:ok, privkey: privkey, pubkey: pubkey}
   end
 
   test "creates a privkey", %{privkey: privkey} do
@@ -14,7 +16,7 @@ defmodule NostrlibTest.Keys do
   end
 
   test "converts to/from nsec", %{privkey: privkey} do
-    {:ok, nsec} = PrivateKey.to_nsec(privkey)
+    nsec = privkey |> PrivateKey.to_binary() |> PrivateKey.to_nsec()
     {:ok, privkey2} = PrivateKey.from_nsec(nsec)
     assert "nsec" <> _bin = nsec
     assert privkey == privkey2
@@ -34,15 +36,12 @@ defmodule NostrlibTest.Keys do
   test "from binary and back" do
   end
 
-  test "Get a valid pubkey from a Bitcoinex private key" do
-  end
-
-  test "Get a valid pubkey from a binary private key" do
-  end
-
-  test "converts to/from npub" do
+  test "converts to/from npub", %{pubkey: pubkey} do
+    assert "npub" <> data = PublicKey.to_npub(pubkey) 
+    assert {:ok, "npub", pubkey} == PublicKey.from_npub("npub" <> data)
   end
 
   test "returns error on invalid npub" do
+     assert {:error, _msg} = PublicKey.from_npub("notannpub") 
   end
 end

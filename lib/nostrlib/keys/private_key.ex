@@ -12,16 +12,18 @@ defmodule Nostrlib.Keys.PrivateKey do
   @doc """
   Creates a new private key
   """
-  @spec create() :: String.t()
+  @spec create :: PrivateKey.t()
   def create do
     :crypto.strong_rand_bytes(32) |> from_binary()
   end
 
+  def create(secret), do: from_binary(secret)
+
   @doc """
   Encodes a private key into the nsec format
   """
-  @spec to_nsec(<<_::256>>) :: binary()
-  def to_nsec(<<_::256>> = private_key), do: {:ok, Utils.to_bech32(private_key, "nsec")}
+  @spec to_nsec(<<_::256>>) :: {:ok, binary()}
+  def to_nsec(<<_::256>> = private_key), do: Utils.to_bech32(private_key, "nsec")
 
   def to_nsec(bin) when is_binary(bin) do
     {:error, "#{bin} should be a 256 bits private key"}
@@ -33,14 +35,10 @@ defmodule Nostrlib.Keys.PrivateKey do
   Extracts a binary private key from the nsec format
   """
   @spec from_nsec(binary()) :: {:ok, <<_::256>>} | {:error, String.t()}
-  def from_nsec("nsec" <> _ = bech32_private_key) do
-    case Bech32.decode(bech32_private_key) do
+  def from_nsec("nsec" <> _ = nsec) do
+    case Utils.from_bech32(nsec) do
       {:ok, "nsec", privkey_bin} ->
-        if bit_size(privkey_bin) == 256 do
           from_binary(privkey_bin)
-        else
-          {:error, "private key is shorter than 256 bits"}
-        end
 
       {:ok, _, _} ->
         {:error, "malformed bech32 private key"}
@@ -58,8 +56,8 @@ defmodule Nostrlib.Keys.PrivateKey do
   Extracts a binary private key from the nsec format
   """
   @spec from_nsec!(binary()) :: <<_::256>>
-  def from_nsec!("nsec" <> _ = bech32_private_key) do
-    case from_nsec(bech32_private_key) do
+  def from_nsec!("nsec" <> _ = nsec) do
+    case from_nsec(nsec) do
       {:ok, private_key} -> private_key
       {:error, message} -> raise message
     end

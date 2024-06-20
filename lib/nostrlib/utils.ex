@@ -3,8 +3,6 @@ defmodule Nostrlib.Utils do
   Utility functions: hex encoding/decoding, json encoding/decoding, bech32...
   """
 
-  alias Bitcoinex.Bech32
-
   def to_hex(bin) when is_binary(bin), do: Base.encode16(bin, case: :lower)
 
   def from_hex(bin) when is_binary(bin), do: Base.decode16!(bin, case: :lower)
@@ -19,8 +17,8 @@ defmodule Nostrlib.Utils do
     end
   end
 
-  def json_encode(map) do
-    case Jason.encode(map) do
+  def json_encode(data) do
+    case Jason.encode(data) do
       {:ok, event} ->
         {:ok, event}
 
@@ -38,8 +36,7 @@ defmodule Nostrlib.Utils do
   @doc """
   Converts a binary into a bech32 format
   """
-  @spec to_bech32(<<_::256>> | String.t(), String.t()) :: String.t()
-  def to_bech32(<<_::256>> = event_id, hrp), do: Bech32.encode(hrp, event_id)
+  def to_bech32(data, hrp), do: Bech32.encode(hrp, data)
 
   def to_bech32_from_hex(hex_id, hrp) do
     hex_id
@@ -51,19 +48,10 @@ defmodule Nostrlib.Utils do
   Converts a bech32 event id into its binary format
   """
   @spec from_bech32(binary()) :: {:ok, binary(), binary()} | {:error, atom()}
-  def from_bech32(bech32_event_id) do
-    case Bech32.decode(bech32_event_id) do
-      {:ok, hrp, event_id} -> {:ok, hrp, event_id}
-      {:error, :no_separator} -> {:error, "not a valid bech32 identifier"}
+  def from_bech32(str) do
+    case Bech32.decode(str) do
+      {:ok, hrp, data} -> {:ok, hrp, data}
       {:error, message} -> {:error, message}
-    end
-  end
-
-  @spec from_bech32!(binary()) :: <<_::256>>
-  def from_bech32!(bech32_id) do
-    case from_bech32(bech32_id) do
-      {:ok, _hrp, event_id} -> event_id
-      {:error, message} -> raise message
     end
   end
 
@@ -91,11 +79,5 @@ defmodule Nostrlib.Utils do
       {:ok, _} -> true
       err -> err
     end
-  end
-
-  def map_string_to_atoms(map) when is_map(map) do
-    map
-    |> Enum.map(fn {k, v} -> {String.to_atom(k), v} end)
-    |> Enum.into(%{})
   end
 end
