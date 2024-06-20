@@ -76,7 +76,7 @@ defmodule Nostrlib.Filter do
 
   def note_by_id(id, opts \\ []), do: filter_by_ids([id], [@text_kind], opts) 
 
-  def notes_by_id(ids, opts \\ []) when is_list(ids), do: filter_by_ids([ids], [@text_kind], opts)
+  def notes_by_id(ids, opts \\ []) when is_list(ids), do: filter_by_ids(ids, [@text_kind], opts)
 
   def kinds(kinds, opts \\ []) when is_list(kinds), do: filter_by_kind(kinds, opts)
 
@@ -130,7 +130,7 @@ defmodule Nostrlib.Filter do
   defp put_opts(filter, []), do: filter
   defp put_opts(filter, opts) do
     Enum.reduce(opts, filter, fn {k, v}, filter ->
-      if k in [:since, :until, :opts] do
+      if k in [:since, :until, :limit] do
         Map.put(filter, k, v)
       end
     end)

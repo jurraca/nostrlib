@@ -18,8 +18,8 @@ defmodule Nostrlib.Message do
   ### Clients to relays
   def decode(["EVENT", event]), do: Event.decode(event)
 
-  def decode(["REQ" | [subscription_id | requests]]) do
-    {:req, Enum.map(requests, &Filter.decode(&1))}
+  def decode(["REQ",  sub_id | requests]) do
+    {:req, sub_id, Enum.map(requests, &Filter.decode(&1))}
   end
 
   def decode(["CLOSE", subscription_id]) do
