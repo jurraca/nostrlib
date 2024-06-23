@@ -1,18 +1,5 @@
 ## Inspect implementations for structs / data models
 
-defimpl Inspect, for: Nostrlib.Event do
-  alias Nostrlib.HexBinary
-
-  def inspect(%Nostrlib.Event{} = event, opts) do
-    %{
-      event
-      | pubkey: %HexBinary{data: event.pubkey},
-        sig: %HexBinary{data: event.sig}
-    }
-    |> Inspect.Any.inspect(opts)
-  end
-end
-
 defimpl Inspect, for: Nostrlib.Models.ContactList do
   alias Nostrlib.HexBinary
   alias Nostrlib.ContactList
