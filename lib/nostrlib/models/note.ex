@@ -25,7 +25,7 @@ defmodule Nostrlib.Note do
     create_serialized(content, pk)
   end
 
-  @spec create(String.t(), map()) :: {:ok, String.t()} | {:error, String.t()}
+  @spec create_serialized(String.t(), map()) :: {:ok, String.t()} | {:error, String.t()}
   def create_serialized(content, privkey) do
     {:ok, pubkey} = PublicKey.from_private_key(privkey)
     create(content, pubkey) |> Event.sign_and_serialize(privkey)

@@ -131,13 +131,13 @@ defmodule Nostrlib.Event do
   @doc """
   Converts a NIP-01 JSON string into a %Event{}
   """
-  @spec decode(Map.t()) :: {:ok, %__MODULE__{}} | {:error, :invalid_request}
+  @spec decode(Map.t()) :: {:ok, %__MODULE__{}} | {:error, String.t()}
   def decode(event) when is_map(event) do
     event = struct!(__MODULE__, event)
     case validate_event(event) do
       {:ok, event} -> {:ok, event}
-      {:error, _} = err ->
-          Logger.warning("Could not validate event #{event.id}.")
+      {:error, reason} = err ->
+          Logger.warning("Could not validate event #{event.id} with reason #{reason}.")
           err
     end
   end
@@ -157,13 +157,13 @@ defmodule Nostrlib.Event do
     |> Base.encode16(case: :lower)
   end
 
-  @spec validate_event(Map.t()) :: {:ok, %__MODULE__{}} | {:error, String.t()}
+  @spec validate_event(Map.t()) :: {:ok, %__MODULE__{}} | {:error, String.t() | Atom.t()}
   def validate_event(%__MODULE__{} = event) do
     with {:ok, _} <- validate_id(event),
          true <- validate_signature(event) do
       {:ok, event}
     else
-      {:error, _} = err -> err
+      {:error, reason}  -> {:error, reason}
     end
   end
 
