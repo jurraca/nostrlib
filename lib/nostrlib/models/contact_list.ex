@@ -2,51 +2,31 @@ defmodule Nostrlib.ContactList do
   @moduledoc """
   Represents a nostr user's contact list and relays.
   """
-  @derive Jason.Encoder
-  defstruct [:pubkey, :contacts, :relays]
+  use Flint
 
-  alias __MODULE__
-  alias Nostrlib.{Contact, Event, Utils}
+  alias Nostrlib.{Contact, Event}
 
-  @type t :: %__MODULE__{}
+  @kind 3
 
-  @contact_kind 3
-  @empty_petname ""
+  embedded_schema do
+    embeds_many :contacts, Contact
+  end
+
+  def to_event(%__MODULE__{contacts: contacts}) do
+     follows = Enum.map(contacts, &Contact.to_tag(&1))
+     Event.new(%{tags: follows, content: "", kind: @kind})
+  end
 
   @doc """
   Converts an %Event{} into a %ContactList{}
   """
-  @spec from_event(Event.t()) :: {:ok, ContactList.t()} | {:error, String.t()}
-  def from_event(event), do: ContactList.Extract.from_event(event)
-
-  @doc """
-  Converts an %ContactList{} into an %Event{}
-  """
-  def get_content_and_tags(%ContactList{contacts: contacts, relays: relays}) do
-    content = content_from_relays(relays)
-    tags = tags_from_contacts(contacts)
-
-    {:ok, content, tags}
+  @spec from_event(Event.t()) :: ContactList.t()
+  def from_event(%Event{tags: tags, kind: 3}) do
+    contacts = Enum.map(tags, fn tag -> Contact.parse(tag) end)
+    new(%{contacts: contacts})
   end
 
-  defp tags_from_contacts(contacts) do
-    contacts
-    |> Enum.map(fn %Contact{pubkey: pubkey} ->
-      ["p", Utils.to_hex(pubkey), @empty_petname]
-    end)
-  end
-
-  defp content_from_relays(nil), do: ""
-
-  defp content_from_relays(relays) do
-    for %{url: url, read?: read?, write?: write?} <- relays do
-      {url, %{read: read?, write: write?}}
-    end
-    |> Map.new()
-    |> Jason.encode!()
-  end
-
-  def add(%ContactList{contacts: contacts} = contact_list, pubkey) do
+  def add(%{contacts: contacts} = contact_list, pubkey) do
     contact = %Contact{pubkey: pubkey}
 
     new_contacts = [contact | contacts]
@@ -54,7 +34,7 @@ defmodule Nostrlib.ContactList do
     %{contact_list | contacts: new_contacts}
   end
 
-  def remove(%ContactList{contacts: contacts} = contact_list, pubkey_to_remove) do
+  def remove(%{contacts: contacts} = contact_list, pubkey_to_remove) do
     new_contacts =
       contacts
       |> Enum.filter(fn %Contact{pubkey: contact_pubkey} ->

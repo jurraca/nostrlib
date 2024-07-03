@@ -8,22 +8,22 @@ defmodule Nostrlib.Event do
   `Privkey` is Bitcoinex's `PrivateKey` struct holding an integer.
   """
 
+  use Flint
   require Logger
 
-  @derive Jason.Encoder
-  defstruct [:id, :pubkey, :created_at, :kind, :tags, :content, :sig]
+  embedded_schema do
+     field :id, :string
+     field :pubkey, :string
+     field :kind, :integer, le: 65535
+     field :content, :string
+     field :tags, {:array, {:array, :string} }
+     field :sig, :string
+     field :created_at, :integer
+  end
 
   alias Nostrlib.Utils
-  alias Nostrlib.{ContactList, Note, Profile}
   alias Bitcoinex.Secp256k1.{Point, Schnorr, Signature}
   alias Bitcoinex.Secp256k1.PrivateKey, as: PrivKey
-
-  @profile_kind 0
-  @note_kind 1
-  @contact_kind 3
-  #@delete_kind 5
-  #@repost_kind 6
-  #@reaction_kind 7
 
   @doc """
   Create an event.
@@ -34,21 +34,8 @@ defmodule Nostrlib.Event do
     create(%{kind: kind, pubkey: hex_pubkey, content: content, tags: tags})
   end
 
-  def create(%{kind: _, pubkey: _, content: _} = event_map) do
-    struct!(__MODULE__, event_map) |> add_id()
-  end
-
-  def create(%Note{content: content}, hex_pubkey) do
-    create(@note_kind, content, hex_pubkey)
-  end
-
-  def create(%Profile{} = profile, hex_pubkey) do
-    create(@profile_kind, profile, hex_pubkey)
-  end
-
-  def create(%ContactList{} = contact_list, hex_pubkey) do
-    {:ok, content, tags} = ContactList.get_content_and_tags(contact_list)
-    create(@contact_kind, content, hex_pubkey, tags: tags)
+  def create(%{kind: _, pubkey: _, content: _} = params) do
+    new(params) |> add_id()
   end
 
   @doc """
@@ -63,21 +50,21 @@ defmodule Nostrlib.Event do
         {:ok, %{event | sig: serialized_sig}}
 
       {:error, message} ->
-        {:error, Atom.to_string(message)}
+        {:error, message}
     end
   end
 
   def sign_and_serialize(%__MODULE__{} = event, %PrivKey{} = privkey) do
     case sign(event, privkey) do
       {:ok, event} -> encode(event)
-      {:error, message} when is_atom(message) -> {:error, Atom.to_string(message)}
+      {:error, message} -> {:error, message}
     end
   end
 
   @doc """
   The Nostr encoding scheme. Takes fields as an array and json encodes them.
   """
-  @spec nostr_encode(%__MODULE__{}) :: String.t()
+  @spec nostr_encode(%__MODULE__{}) :: {:ok, String.t()} | {:error, String.t()}
   def nostr_encode(%__MODULE__{
         pubkey: hex_pubkey,
         created_at: created_at,

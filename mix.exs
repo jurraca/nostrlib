@@ -56,7 +56,8 @@ defmodule Nostrlib.MixProject do
       {:ex_doc, "~> 0.29.1", only: [:docs], runtime: false},
       {:jason, "~> 1.4"},
       {:bitcoinex, "~> 0.1.7"},
-      {:bech32, "~> 1.0.0"}
+      {:bech32, "~> 1.0.0"},
+      {:flint, github: "acalejos/flint"}
     ]
   end
 end
