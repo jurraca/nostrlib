@@ -23,7 +23,7 @@ defmodule Nostrlib.Message do
   end
 
   def decode(["CLOSE", subscription_id]) do
-    {:close, %CloseRequest{subscription_id: subscription_id}}
+    {:close, CloseRequest.new(subscription_id)}
   end
 
   ### Relays to Clients
