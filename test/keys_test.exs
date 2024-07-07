@@ -6,7 +6,7 @@ defmodule NostrlibTest.Keys do
   alias Nostrlib.Keys.PublicKey
 
   setup do
-    {:ok, privkey} = PrivateKey.create()
+    {:ok, privkey} = PrivateKey.new()
     {:ok, pubkey} = PublicKey.from_private_key(privkey)
     {:ok, privkey: privkey, pubkey: pubkey}
   end

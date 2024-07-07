@@ -11,19 +11,20 @@ defmodule Nostrlib.Event do
   use Flint
   require Logger
 
+  alias Nostrlib.Utils
+  alias Nostrlib.Event.Tags
+  alias Bitcoinex.Secp256k1.{Point, Schnorr, Signature}
+  alias Bitcoinex.Secp256k1.PrivateKey, as: PrivKey
+
   embedded_schema do
      field :id, :string
      field :pubkey, :string
      field :kind, :integer, le: 65535
      field :content, :string
-     field :tags, {:array, {:array, :string} }
      field :sig, :string
      field :created_at, :integer
+     embeds_one :tags, Tags
   end
-
-  alias Nostrlib.Utils
-  alias Bitcoinex.Secp256k1.{Point, Schnorr, Signature}
-  alias Bitcoinex.Secp256k1.PrivateKey, as: PrivKey
 
   @doc """
   Create an event.
@@ -120,8 +121,7 @@ defmodule Nostrlib.Event do
   """
   @spec decode(Map.t()) :: {:ok, %__MODULE__{}} | {:error, String.t()}
   def decode(event) when is_map(event) do
-    event = struct!(__MODULE__, event)
-    case validate_event(event) do
+    case new(event)|> validate_event() do
       {:ok, event} -> {:ok, event}
       {:error, reason} = err ->
           Logger.warning("Could not validate event #{event.id} with reason #{reason}.")

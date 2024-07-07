@@ -12,12 +12,12 @@ defmodule Nostrlib.Keys.PrivateKey do
   @doc """
   Creates a new private key
   """
-  @spec create :: PrivateKey.t()
-  def create do
+  @spec new :: PrivateKey.t()
+  def new do
     :crypto.strong_rand_bytes(32) |> from_binary()
   end
 
-  def create(secret), do: from_binary(secret)
+  def new(secret), do: from_binary(secret)
 
   @doc """
   Encodes a private key into the nsec format

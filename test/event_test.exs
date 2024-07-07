@@ -5,7 +5,7 @@ defmodule NostrlibTest.Events do
   alias Nostrlib.Keys.{PublicKey, PrivateKey}
 
   setup do
-    {:ok, privkey} = PrivateKey.create()
+    {:ok, privkey} = PrivateKey.new()
     {:ok, pubkey} = privkey |> PublicKey.from_private_key()
     hex_pubkey = Nostrlib.Utils.to_hex(pubkey)
     event = Event.create(1, "testnote", hex_pubkey)

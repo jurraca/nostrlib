@@ -28,7 +28,10 @@ defmodule Nostrlib.Message do
 
   ### Relays to Clients
   def decode(["EVENT", subscription_id, event]) do
-    {:event, subscription_id, event}
+    case Event.decode(event) do
+      {:ok, event} -> {:event, subscription_id, event}
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   def decode(["NOTICE", message]) when is_binary(message) do

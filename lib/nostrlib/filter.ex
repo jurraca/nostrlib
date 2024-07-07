@@ -7,7 +7,7 @@ defmodule Nostrlib.Filter do
   alias Nostrlib.Utils
 
   @valid_keys [:since, :until, :limit, :ids, :authors, :kinds, :e, :p]
-  
+
   @default_id_size 16
   # hours back for messages
   @default_since 36
@@ -44,14 +44,14 @@ defmodule Nostrlib.Filter do
 
   @doc """
   Merge two filters, handling conflicts according to the key type.
-  "since", "until", and "opts" are simply overidden by the latest value provided.
+  "since", "until", and "limit" are simply overidden by the latest value provided.
   """
   def merge(f1, f2) do
-     Map.merge(f1, f2, fn k, v1, v2 -> 
+     Map.merge(f1, f2, fn k, v1, v2 ->
          cond do
             k in [:ids, :authors, :kinds] -> v1 ++ v2
-            k in [:since, :until, :opts] -> v2
-            true -> v1 ++ v2 # for e,p tags 
+            k in [:since, :until, :limit] -> v2
+            true -> v1 ++ v2 # for e,p tags
          end
      end)
   end
@@ -59,14 +59,21 @@ defmodule Nostrlib.Filter do
   def create_sub_id do
      generate_random_id() |> String.to_atom()
   end
-  
+
+  def encode(filter) do
+     with sub_id <- create_sub_id(),
+      {:ok, req} <- encode(sub_id, filter) do
+         {:ok, sub_id, req}
+      end
+  end
+
   def encode(sub_id, filter) when is_map(filter) do
     Jason.encode(["REQ", sub_id, filter])
   end
 
   def decode(json), do: Utils.json_decode(json, keys: :atoms)
 
-  ### Filter builders ### 
+  ### Filter builders ###
 
   def profile(pubkey, opts \\ []), do: filter_by_authors([pubkey], [@metadata_kind], opts)
 
@@ -74,7 +81,7 @@ defmodule Nostrlib.Filter do
 
   def contacts(pubkey, opts \\ []), do: filter_by_authors([pubkey], [@contacts_kind], opts)
 
-  def note_by_id(id, opts \\ []), do: filter_by_ids([id], [@text_kind], opts) 
+  def note_by_id(id, opts \\ []), do: filter_by_ids([id], [@text_kind], opts)
 
   def notes_by_id(ids, opts \\ []) when is_list(ids), do: filter_by_ids(ids, [@text_kind], opts)
 
@@ -140,8 +147,8 @@ defmodule Nostrlib.Filter do
       filter = Enum.reduce(params, %{}, fn {k, v}, acc -> validate(k, v, acc) end)
       case :since in Map.keys(filter) do
           true -> {:ok, filter}
-          false -> 
-              filter = Map.put(filter, :since, @default_since)
+          false ->
+              filter = Map.put(filter, :since, since_hours(@default_since))
               {:ok, filter}
       end
   end
